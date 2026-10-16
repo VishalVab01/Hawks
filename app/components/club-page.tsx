@@ -17,8 +17,7 @@ const navigation = [
   { label: "Home", href: "/" },
   { label: "Story", href: "/story" },
   { label: "Events", href: "/events" },
-  { label: "Pricing", href: "/pricing" },
-  { label: "Blog", href: "/blog" },
+  { label: "Join", href: "/pricing" },
   { label: "Gallery", href: "/image-slider" },
 ];
 
@@ -41,6 +40,13 @@ const collage = [
   { src: "https://theperformancelab.ca/parallax/i5.webp", alt: "Runner preparing to start", speed: 22 },
   { src: "https://theperformancelab.ca/parallax/i6.webp", alt: "Athlete in motion", speed: 38 },
 ];
+
+const introSportsImages = {
+  cricket: "/images/home-sports/cricket.jpg",
+  badminton: "/images/home-sports/badminton.jpg",
+  chess: "/images/home-sports/chess.jpg",
+  esports: "/images/home-sports/mobile-esports.jpg",
+};
 
 const galleryPhotos = [
   ...collage,
@@ -148,7 +154,7 @@ function OrbitalGallery() {
     };
 
     const updateProgress = (progress: number) => {
-      const turn = reducedMotion ? 180 : 540;
+      const turn = reducedMotion ? 180 : 360;
       targetRotation = -progress * turn;
       const cardStep = 360 / cards.length;
       const nextIndex = Math.round((progress * turn) / cardStep) % cards.length;
@@ -348,144 +354,164 @@ function IntroMotionBand() {
   );
 }
 
-function CappenCursor() {
-  const cursorRef = useRef<HTMLDivElement>(null);
-  const dotRef = useRef<HTMLSpanElement>(null);
+function QuoteTrail() {
+  const surfaceRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const cursor = cursorRef.current;
-    const dot = dotRef.current;
-    const finePointer = window.matchMedia("(hover: hover) and (pointer: fine)");
-    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (!cursor || !dot || !finePointer.matches || reducedMotion) return;
-
-    document.body.classList.add("cappen-cursor-active");
-    let x = 0;
-    let y = 0;
-    let targetX = 0;
-    let targetY = 0;
-    let hasPosition = false;
-    let frame = 0;
-    let lastFrameTime = 0;
-    let hideTimer: ReturnType<typeof setTimeout> | undefined;
-
-    const animate = (time: number) => {
-      frame = 0;
-      const elapsed = lastFrameTime ? Math.min(64, time - lastFrameTime) : 16.67;
-      lastFrameTime = time;
-      const easing = 1 - Math.pow(0.9, elapsed / 16.67);
-      const dx = targetX - x;
-      const dy = targetY - y;
-      x += dx * easing;
-      y += dy * easing;
-      cursor.style.transform = `translate3d(${x}px, ${y}px, 0)`;
-
-      const distance = Math.hypot(dx, dy);
-      let stretch = Math.min(distance / 100, 0.5);
-      stretch *= (stretch / 0.5) ** 2;
-      const angle = Math.atan2(dy, dx);
-      dot.style.transform = `translate(-50%, -50%) scale(${1 + stretch}, ${1 - 0.25 * stretch}) rotate(${angle}rad)`;
-
-      if (distance > 0.12) frame = window.requestAnimationFrame(animate);
+    const surface = surfaceRef.current;
+    if (!surface) return;
+    let active = true;
+    let fluid: { destroy: () => void } | null = null;
+    const fluidScript = document.createElement("script");
+    fluidScript.src = "/liquid-cursor.js";
+    fluidScript.async = true;
+    fluidScript.dataset.manual = "";
+    fluidScript.onload = () => {
+      const liquidCursor = (window as Window & {
+        LiquidCursor?: (options: {
+          target: HTMLElement;
+          gain: number;
+          dyeFade: number;
+          motionFade: number;
+          curl: number;
+          radius: number;
+          force: number;
+          simRes: number;
+          dyeRes: number;
+          colors: number[][];
+        }) => { destroy: () => void } | null;
+      }).LiquidCursor;
+      if (!active || !liquidCursor) return;
+      fluid = liquidCursor({
+        target: surface,
+        gain: 0.24,
+        dyeFade: 0.88,
+        motionFade: 0.58,
+        curl: 34,
+        radius: 0.2,
+        force: 2600,
+        simRes: 112,
+        dyeRes: 384,
+        colors: [[1, 0.2, 0.055], [1, 0.36, 0.08], [1, 0.62, 0.18], [0.98, 0.12, 0.08]],
+      });
     };
-
-    const move = (event: globalThis.MouseEvent) => {
-      targetX = event.clientX;
-      targetY = event.clientY;
-      if (!hasPosition) {
-        x = targetX;
-        y = targetY;
-        hasPosition = true;
-      }
-      cursor.classList.add("is-visible");
-      if (hideTimer) clearTimeout(hideTimer);
-      hideTimer = setTimeout(() => cursor.classList.remove("is-visible"), 1500);
-      if (!frame) frame = window.requestAnimationFrame(animate);
-    };
-    const leave = () => cursor.classList.remove("is-visible");
-
-    window.addEventListener("mousemove", move, { passive: true });
-    document.addEventListener("mouseleave", leave);
+    document.head.appendChild(fluidScript);
     return () => {
-      window.removeEventListener("mousemove", move);
-      document.removeEventListener("mouseleave", leave);
-      if (frame) window.cancelAnimationFrame(frame);
-      if (hideTimer) clearTimeout(hideTimer);
-      document.body.classList.remove("cappen-cursor-active");
+      active = false;
+      fluid?.destroy();
+      fluidScript.remove();
     };
   }, []);
-
-  return <div className="cappen-cursor" ref={cursorRef} aria-hidden="true"><span className="cappen-cursor-dot" ref={dotRef} /></div>;
-}
-
-function GooeyQuoteReveal() {
-  const quoteRef = useRef<HTMLQuoteElement>(null);
-  const lastPointRef = useRef<{ x: number; y: number } | null>(null);
-  const [maskSize, setMaskSize] = useState({ width: 1000, height: 400 });
-  const [scratchPoints, setScratchPoints] = useState<Array<{ x: number; y: number }>>([]);
-
-  useEffect(() => {
-    const quote = quoteRef.current;
-    if (!quote) return;
-    const observer = new ResizeObserver(([entry]) => {
-      setMaskSize({ width: Math.max(1, entry.contentRect.width), height: Math.max(1, entry.contentRect.height) });
-    });
-    observer.observe(quote);
-    return () => observer.disconnect();
-  }, []);
-
-  const addScratch = (points: Array<{ x: number; y: number }>) => {
-    setScratchPoints((previous) => [...previous, ...points]);
-  };
-
-  const scratchQuote = (event: React.PointerEvent<HTMLQuoteElement>) => {
-    const quote = quoteRef.current;
-    if (!quote) return;
-    const bounds = quote.getBoundingClientRect();
-    const current = { x: event.clientX - bounds.left, y: event.clientY - bounds.top };
-    const previous = lastPointRef.current;
-    lastPointRef.current = current;
-    if (!previous) {
-      addScratch([current]);
-      return;
-    }
-
-    const distance = Math.hypot(current.x - previous.x, current.y - previous.y);
-    if (distance < 10) return;
-    const steps = Math.ceil(distance / 12);
-    const newPoints = Array.from({ length: steps }, (_, index) => {
-      const progress = (index + 1) / steps;
-      return {
-        x: previous.x + (current.x - previous.x) * progress,
-        y: previous.y + (current.y - previous.y) * progress,
-      };
-    });
-    addScratch(newPoints);
-  };
-
-  const resetScratchPoint = () => {
-    lastPointRef.current = null;
-  };
 
   return (
-    <blockquote className="quote-reveal" ref={quoteRef} onPointerMove={scratchQuote} onPointerLeave={resetScratchPoint} onPointerDown={scratchQuote}>
-      “The best part is having people around you who cheer you on, even when you’re still learning.”
-      <span className="quote-reveal-cover" aria-hidden="true" />
-      <svg className="quote-mask-defs" aria-hidden="true" focusable="false">
-        <defs>
-          <filter id="quote-gooey-filter" x="-20%" y="-20%" width="140%" height="140%" colorInterpolationFilters="sRGB">
-            <feGaussianBlur in="SourceGraphic" stdDeviation="8" result="blur" />
-            <feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 18 -7" result="goo" />
-          </filter>
-          <mask id="quote-gooey-mask" maskUnits="objectBoundingBox" maskContentUnits="userSpaceOnUse" mask-type="luminance">
-            <rect x="-10000" y="-10000" width="20000" height="20000" fill="white" />
-            <g filter="url(#quote-gooey-filter)" fill="black">
-              {scratchPoints.map((point, index) => <circle key={index} cx={point.x} cy={point.y} r="34" />)}
-            </g>
-          </mask>
-        </defs>
-      </svg>
-    </blockquote>
+    <div className="quote-trail-surface" ref={surfaceRef}>
+      <blockquote className="quote-reveal">“The best part is having people around you who cheer you on, even when you’re still learning.”</blockquote>
+    </div>
+  );
+}
+
+function JoinClubApplication() {
+  return (
+    <section className="join-application" aria-labelledby="join-application-title">
+      <div className="join-application-heading">
+        <p className="eyebrow">HAWKS YOUTH CLUB · MEMBERSHIP</p>
+        <h1 id="join-application-title">Make your<br /><em>next move.</em></h1>
+        <p>Tell us a little about yourself and what you’d like to try. A parent or guardian can send the application for you.</p>
+      </div>
+      <form className="join-application-form" action="mailto:hello@hawksclub.in?subject=Hawks%20Club%20Membership%20Application" method="post" encType="text/plain">
+        <div className="join-form-field">
+          <label htmlFor="young-person-name">Young person’s name</label>
+          <input id="young-person-name" name="Young person's name" autoComplete="name" required />
+        </div>
+        <div className="join-form-field join-form-field-short">
+          <label htmlFor="young-person-age">Age</label>
+          <input id="young-person-age" name="Age" type="number" min="5" max="18" inputMode="numeric" required />
+        </div>
+        <div className="join-form-field">
+          <label htmlFor="guardian-name">Parent or guardian’s name</label>
+          <input id="guardian-name" name="Parent or guardian's name" autoComplete="name" required />
+        </div>
+        <div className="join-form-field">
+          <label htmlFor="guardian-email">Parent or guardian’s email</label>
+          <input id="guardian-email" name="Parent or guardian's email" type="email" autoComplete="email" required />
+        </div>
+        <div className="join-form-field">
+          <label htmlFor="guardian-phone">Phone number</label>
+          <input id="guardian-phone" name="Phone number" type="tel" autoComplete="tel" />
+        </div>
+        <div className="join-form-field">
+          <label htmlFor="club-interest">What would you like to try?</label>
+          <select id="club-interest" name="Activity of interest" defaultValue="" required>
+            <option value="" disabled>Select an activity</option>
+            <option>Football</option><option>Cricket</option><option>Basketball</option><option>Badminton</option>
+            <option>Athletics</option><option>Strength & movement</option><option>Chess</option><option>Gaming</option><option>Not sure yet</option>
+          </select>
+        </div>
+        <div className="join-form-field join-form-field-wide">
+          <label htmlFor="join-message">Anything else we should know? <span>Optional</span></label>
+          <textarea id="join-message" name="Additional details" rows={3} />
+        </div>
+        <p className="join-form-note">Submitting opens your email app with these details ready to send to the Hawks team.</p>
+        <button className="join-form-submit" type="submit">Send membership enquiry <ArrowUpRight size={18} /></button>
+      </form>
+    </section>
+  );
+}
+
+function StoryPageContent({ onNavigate }: { onNavigate: (event: MouseEvent<HTMLAnchorElement>) => void }) {
+  return (
+    <div className="story-page">
+      <section className="story-about-hero">
+        <p className="story-about-kicker">HAWKS YOUTH CLUB <span>·</span> OUR STORY</p>
+        <div className="story-about-hero-grid">
+          <h1>MADE TO<br />MOVE <em>TOGETHER.</em></h1>
+          <div className="story-about-mission">
+            <p className="story-about-label">OUR MISSION</p>
+            <p>We make sport a place where every young person can find their confidence, discover what they love, and grow alongside a team that has their back.</p>
+            <a href="/pricing" onClick={onNavigate}>FIND YOUR PLACE <ArrowUpRight size={16} /></a>
+          </div>
+        </div>
+        <span className="story-about-index">01 — 04 <span>SCROLL TO EXPLORE</span></span>
+      </section>
+
+      <section className="story-about-gallery" aria-label="Life at Hawks">
+        <figure className="story-about-photo story-about-photo-one"><img src={collage[0].src} alt="Young athletes sharing a moment after practice" /><figcaption>SHOW UP FOR EACH OTHER <span>01</span></figcaption></figure>
+        <figure className="story-about-photo story-about-photo-two"><img src={collage[1].src} alt="Young athlete running during training" /><figcaption>FIND YOUR OWN PACE <span>02</span></figcaption></figure>
+        <figure className="story-about-photo story-about-photo-three"><img src={collage[3].src} alt="Coach supporting an athlete through practice" /><figcaption>GROW WITH GOOD PEOPLE <span>03</span></figcaption></figure>
+      </section>
+
+      <section className="story-about-intro">
+        <p className="story-about-label">MORE ABOUT US</p>
+        <div>
+          <h2>SPORT IS THE START.<br /><em>Belonging is the point.</em></h2>
+          <p>Hawks is a youth sports club built around the belief that movement can open doors. We bring young people together to learn the basics, take on a challenge, and experience the joy of being part of a team.</p>
+          <p>There’s room to be new, to ask questions, to make mistakes, and to keep going. Our coaches and community make sure every young person has the support to grow at their own pace.</p>
+        </div>
+      </section>
+
+      <section className="story-about-marquee" aria-label="Move, learn, belong, grow">
+        <div className="story-about-marquee-track"><span>MOVE · LEARN · BELONG · GROW ·&nbsp;</span><span aria-hidden="true">MOVE · LEARN · BELONG · GROW ·&nbsp;</span></div>
+      </section>
+
+      <section className="story-about-approach">
+        <div className="story-about-approach-heading">
+          <p className="story-about-label">HOW WE DO IT</p>
+          <h2>A CLUB THAT<br />GROWS <em>with you.</em></h2>
+          <p>Good sport is about more than the scoreboard. It’s how you feel when you walk in, what you learn along the way, and who’s cheering when you try.</p>
+        </div>
+        <div className="story-about-values">
+          <article><span>01 / BELONGING</span><h3>There’s a place for you.</h3><p>Start wherever you are. We make space for different interests, abilities, and ways of finding your game.</p></article>
+          <article><span>02 / COURAGE</span><h3>Progress takes practice.</h3><p>Try something unfamiliar, celebrate small wins, and learn that confidence grows one step at a time.</p></article>
+          <article><span>03 / TEAMWORK</span><h3>We rise together.</h3><p>Encouragement matters. We build teams that respect each other and make every person feel seen.</p></article>
+        </div>
+      </section>
+
+      <section className="story-about-cta">
+        <p className="story-about-label">YOUR NEXT MOVE STARTS HERE</p>
+        <h2>Come find<br /><em>your team.</em></h2>
+        <a href="/pricing" onClick={onNavigate}>JOIN THE CLUB <ArrowUpRight size={17} /></a>
+      </section>
+    </div>
   );
 }
 
@@ -589,6 +615,7 @@ export function ClubPage({ page = "home" }: { page?: PageKind }) {
         </nav>}
       </header>
       {page === "image-slider" && <InfiniteImageGallery />}
+      {page === "story" && <StoryPageContent onNavigate={navigateClick} />}
       {isHome && <section className="hero" id="home">
         <img className="hero-backdrop-image" src="/images/runner-hero.jpg" alt="" aria-hidden="true" />
         <div className="hero-title" aria-label="Where champions are made"><span>Where</span><span>Champions</span><span>Are Made</span></div>
@@ -612,16 +639,16 @@ export function ClubPage({ page = "home" }: { page?: PageKind }) {
         </div>
       </section>}
 
-      {(isHome || page === "story") && <section className="intro-section" id="story">
-        <IntroMovingImage className="intro-float intro-float-top intro-parallax-image" src={collage[4].src} alt="Hawks athlete preparing to run" />
+      {isHome && <section className="intro-section" id="story">
+        <IntroMovingImage className="intro-float intro-float-top intro-parallax-image" src={introSportsImages.cricket} alt="Cricket ball resting in vivid green grass" />
         <div className="intro-lead">
-          <IntroMovingImage className="intro-lead-image intro-parallax-image" src={collage[1].src} alt="Young athletes playing basketball" />
+          <IntroMovingImage className="intro-lead-image intro-parallax-image" src={introSportsImages.badminton} alt="Badminton shuttlecocks on a green court" />
           <div className="intro-lead-copy"><p className="eyebrow">WHAT IS HAWKS SPORTS CLUB</p><h2>Helping young people move better, grow together, and find their game.</h2></div>
         </div>
         <div className="intro-detail">
-          <IntroMovingImage className="intro-float intro-float-left intro-parallax-image" src={collage[2].src} alt="Athlete developing strength" />
+          <IntroMovingImage className="intro-float intro-float-left intro-parallax-image" src={introSportsImages.chess} alt="Black and white chess knights facing each other" />
           <div className="intro-detail-panel"><span className="intro-plus intro-plus-left">+</span><span className="intro-plus intro-plus-right">+</span><p className="eyebrow">THE HAWKS WAY</p><h3>Find your game. Whether you’re learning a new sport, building lifelong confidence, or looking for a team, we’re here to help you take your next step.</h3><p className="intro-detail-copy">Try something new, discover what you’re good at, and grow alongside people who have your back. Our coaches help you build skills, healthy habits, and confidence you can carry beyond the court or field. Every practice is a chance to learn, belong, and move forward together.</p><a className="intro-detail-cta" href="/pricing" onClick={navigateClick}>LEARN MORE ABOUT HAWKS <ArrowUpRight size={18} /></a></div>
-          <IntroMovingImage className="intro-float intro-float-right intro-parallax-image" src={collage[3].src} alt="A coach supporting an athlete" />
+          <IntroMovingImage className="intro-float intro-float-right intro-parallax-image" src={introSportsImages.esports} alt="Mobile esports gameplay on a smartphone" />
         </div>
         <IntroMotionBand />
       </section>}
@@ -631,7 +658,7 @@ export function ClubPage({ page = "home" }: { page?: PageKind }) {
         <div className="program-grid">{programs.map((program) => <article className="program-card" key={program.number}><div className="program-image"><img src={program.image} alt={program.alt} loading="lazy" /></div><div className="program-meta"><span>PROGRAM</span><span>{program.number}</span></div><h3>{program.title}</h3><p>{program.text}</p><a href="/pricing" onClick={navigateClick}>Explore the program <ArrowUpRight size={16} /></a></article>)}</div>
       </section>}
 
-      {(isHome || page === "events") && <OrbitalGallery />}
+      {isHome && <OrbitalGallery />}
 
       {isHome && <section className="people-section">
         <div className="people-photo"><img src="https://theperformancelab.ca/parallax/i4.webp" alt="A coach encouraging an athlete" loading="lazy" /></div>
@@ -639,17 +666,19 @@ export function ClubPage({ page = "home" }: { page?: PageKind }) {
         <div className="people-stamp"><strong>PLAY<br />AS ONE</strong><span>HAWKS SPORTS CLUB</span></div>
       </section>}
 
-      {(isHome || page === "pricing") && <section className="journey-section" id="journey">
+      {isHome && <section className="journey-section" id="journey">
         <div className="journey-heading"><p className="eyebrow">03 — Your first steps</p><h2>Find your place.<br /><em>Then take flight.</em></h2><p>Starting something new should feel easy. Here’s how to get involved and find the right fit.</p></div>
         <div className="journey-steps">{steps.map((step, index) => <article className="journey-step" key={step.title}><span className="step-number">{String(index + 1).padStart(3, "0")}</span><div><span className="step-note">{step.note}</span><h3>{step.title}</h3><p>{step.text}</p></div><span className="step-arrow"><ArrowUpRight size={20} /></span></article>)}</div>
         <a className="orange-link" href="#join" onClick={scrollTo}>Take your first step <ArrowUpRight size={18} /></a>
       </section>}
 
-      {(isHome || page === "events") && <section className="quote-section"><p className="eyebrow">A note from the club</p><GooeyQuoteReveal /><div className="quote-byline"><span className="quote-mark">H</span><span>Hawks Club<br /><small>Young athlete</small></span></div></section>}
+      {isHome && <section className="quote-section"><p className="eyebrow">A note from the club</p><QuoteTrail /><div className="quote-byline"><span className="quote-mark">H</span><span>Hawks Club<br /><small>Young athlete</small></span></div></section>}
 
       {page === "blog" && <section className="journal-section" id="journal"><div className="journal-heading"><div><p className="eyebrow">04 — Notes from the club</p><h2>Keep<br /><em>moving.</em></h2></div><a className="text-link" href="/pricing" onClick={navigateClick}>More from Hawks <ArrowUpRight size={17} /></a></div><div className="journal-grid">{journal.map((post) => <article className="journal-card" key={post.number}><div className="journal-art"><span className="journal-art-number">{post.number}</span><span className="journal-orbit" /></div><div className="journal-meta"><span>{post.tag}</span><span>{post.number}</span></div><h3>{post.title}</h3><a href="/story" onClick={navigateClick}>Read the story <ArrowUpRight size={16} /></a></article>)}</div></section>}
 
-      {(isHome || page === "pricing") && <section className="join-section" id="join"><div><p className="eyebrow">Your next move starts here</p><h2>Come find<br /><em>your team.</em></h2></div><div className="join-copy"><p>New to sport or ready for a new challenge? There’s a place for you at Hawks.</p><a className="dark-cta" href="mailto:hello@hawksclub.in">Get in touch <ArrowUpRight size={19} /></a><span>Families and young athletes are welcome to reach out.</span></div></section>}
+      {isHome && <section className="join-section" id="join"><div><p className="eyebrow">Your next move starts here</p><h2>Come find<br /><em>your team.</em></h2></div><div className="join-copy"><p>New to sport or ready for a new challenge? There’s a place for you at Hawks.</p><a className="dark-cta" href="mailto:hello@hawksclub.in">Get in touch <ArrowUpRight size={19} /></a><span>Families and young athletes are welcome to reach out.</span></div></section>}
+
+      {page === "pricing" && <JoinClubApplication />}
 
       {page !== "image-slider" && page !== "story" && <footer className="hawks-footer" id="footer">
         <div className="hawks-footer-cta"><h2>Hawks Together.<br />Rise Together.</h2><div className="hawks-footer-actions"><a className="hawks-footer-secondary" href="/events" onClick={navigateClick}>Explore programs</a><a className="hawks-footer-primary" href="/pricing" onClick={navigateClick}>Join the club</a></div></div>
@@ -663,7 +692,6 @@ export function ClubPage({ page = "home" }: { page?: PageKind }) {
           <p className="hawks-footer-copyright">© 2026 Hawks Youth Club. All rights reserved.</p>
         </div>
       </footer>}
-      <CappenCursor />
     </main>
   );
 }
