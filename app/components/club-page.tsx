@@ -195,6 +195,13 @@ function OrbitalGallery() {
     <section className="orbit-gallery-section" id="gallery" ref={sectionRef} data-nav-theme="dark" aria-label="Hawks sports photo gallery">
       <div className="orbit-gallery-stage" ref={stageRef}>
         <div className="orbit-gallery-view">
+          <div className="orbit-gallery-ring orbit-gallery-ring-back" role="presentation" aria-hidden="true">
+            {galleryPhotos.map((photo, index) => (
+              <div className="orbit-card" key={`back-${photo.src}-${index}`} style={{ "--card-angle": `${(index * 360) / galleryPhotos.length + 18}deg` } as CSSProperties}>
+                <img src={photo.src} alt="" loading="lazy" />
+              </div>
+            ))}
+          </div>
           <div className="orbit-gallery-ring" ref={ringRef} role="list" aria-label="Hawks sports photo carousel">
             {galleryPhotos.map((photo, index) => (
               <div className="orbit-card" key={`${photo.src}-${index}`} ref={(node) => { cardsRef.current[index] = node; }} style={{ "--card-angle": `${(index * 360) / galleryPhotos.length}deg` } as CSSProperties} role="listitem" aria-label={photo.alt}>
