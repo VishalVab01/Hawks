@@ -57,6 +57,35 @@ const galleryPhotos = [
   { src: "https://images.unsplash.com/photo-1461896836934-ffe607ba8211?auto=format&fit=crop&w=700&q=80", alt: "Runners racing on a track", speed: 32 },
 ];
 
+const tunnelPhotos = [
+  "Youth award winners holding their certificates and medals",
+  "Hawks members presenting a trophy at Bhagalpur National College",
+  "Club members gathering after an event",
+  "Hawks New Year celebration beneath yellow and white balloons",
+  "Members celebrating together at a club event",
+  "Young club members at a community gathering",
+  "Hawks members sharing a meal",
+  "Club representative meeting with local leaders",
+  "Young esports tournament winners with their awards",
+  "Hawks member speaking at an awards ceremony",
+  "BGMI LAN tournament award winners",
+  "A young player receiving an esports award",
+  "Tournament team posing with medals and trophies",
+  "Hawks members receiving recognition at an event",
+  "Newspaper coverage of a Hawks esports tournament",
+  "Hawks founder O.P. Singh at the India AI Impact Summit",
+  "Young members celebrating together",
+  "Newspaper coverage of the BGMI LAN tournament",
+  "Hawks representatives at an MSME event",
+  "Trophies and medals from the Hawks tournament",
+  "Club members celebrating a milestone",
+  "Hawks founder meeting with a Bihar government official",
+  "Members gathered at a Hawks community event",
+].map((alt, index) => ({
+  src: `/images/gallery/club-photo-${String(index + 1).padStart(2, "0")}.jpg`,
+  alt,
+}));
+
 const programs = [
   { number: "001", title: "Team sports", text: "Learn the game, trust your teammates, and discover what you can do together.", image: "https://theperformancelab.ca/parallax/i1.webp", alt: "Team sports practice" },
   { number: "002", title: "Creative Arts & Expression", text: "Explore art, storytelling, and hands-on projects that spark imagination and help young people express themselves.", image: "/images/programs/creative-arts.jpg", alt: "Art materials ready for a creative workshop" },
@@ -220,12 +249,7 @@ function OrbitalGallery() {
   );
 }
 
-const tunnelPositions = [
-  { x: "0px", y: "clamp(-190px, -15vw, -60px)" },
-  { x: "clamp(-420px, -30vw, -90px)", y: "0px" },
-  { x: "clamp(90px, 30vw, 420px)", y: "0px" },
-  { x: "0px", y: "clamp(60px, 15vw, 190px)" },
-];
+const tunnelImageCount = 4;
 
 function InfiniteImageGallery() {
   const stageRef = useRef<HTMLDivElement>(null);
@@ -236,77 +260,61 @@ function InfiniteImageGallery() {
     if (!stage) return;
 
     const layers = layersRef.current.filter((layer): layer is HTMLDivElement => layer !== null);
-    const layerCount = layers.length;
-    const spacing = 1800;
-    const tunnelLength = layerCount * spacing;
-    // Let each layer travel close to the camera plane. CSS perspective scales
-    // the photos up naturally until they fill the viewport and pass out of view.
-    const nearestZ = window.innerWidth < 760 ? 900 : 1260;
-    const farZ = nearestZ - tunnelLength;
-    const motion = { position: tunnelLength - spacing / 2 };
-    let targetPosition = motion.position;
-    let touchY = 0;
+    const layerGap = 2500;
+    const tunnelDepth = layers.length * layerGap;
+    const exitPoint = 900;
+    const visibleDepth = layerGap * 3;
+    const initialScroll = tunnelDepth - 100;
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const scroll = { target: initialScroll, current: initialScroll };
 
+    const getOverlay = (z: number) => {
+      if (z > exitPoint) return 1;
+      if (z > 0) return z / exitPoint;
+      if (z > -visibleDepth) return Math.pow(Math.abs(z) / visibleDepth, 2);
+      return 1;
+    };
     const renderTunnel = () => {
-      motion.position += (targetPosition - motion.position) * 0.075;
+      scroll.current += (scroll.target - scroll.current) * (reducedMotion ? 1 : 0.075);
       layers.forEach((layer, index) => {
-        // Positive wheel movement advances progress, moves Z toward the camera,
-        // and adds a little explicit scale on top of the CSS perspective.
-        const progress = ((motion.position - index * spacing) % tunnelLength + tunnelLength) % tunnelLength;
-        const depthProgress = progress / tunnelLength;
-        const z = farZ + progress;
-        gsap.set(layer, {
-          x: index === 1 ? 140 : 0,
-          y: index === 1 ? 55 : 0,
-          z,
-          scale: 0.82 + depthProgress * 0.18,
-          autoAlpha: 1,
-        });
+        const baseZ = -index * layerGap;
+        let z = ((baseZ + scroll.current) % tunnelDepth + tunnelDepth) % tunnelDepth;
+        if (z > exitPoint) z -= tunnelDepth;
+        const overlay = getOverlay(z);
+        gsap.set(layer, { z, visibility: overlay >= 1 ? "hidden" : "visible" });
+        layer.style.setProperty("--layer-overlay", String(overlay));
       });
     };
-
     const handleWheel = (event: WheelEvent) => {
-      event.preventDefault();
-      targetPosition += event.deltaY * 0.45;
+      if (!stage.isConnected) return;
+      scroll.target += event.deltaY * 0.75;
     };
-    const handleTouchStart = (event: TouchEvent) => { touchY = event.touches[0]?.clientY ?? 0; };
+    const handleTouchStart = (event: TouchEvent) => { stage.dataset.touchY = String(event.touches[0]?.clientY ?? 0); };
     const handleTouchMove = (event: TouchEvent) => {
-      event.preventDefault();
-      const nextY = event.touches[0]?.clientY ?? touchY;
-      targetPosition += (touchY - nextY) * 1.3;
-      touchY = nextY;
+      const previousY = Number(stage.dataset.touchY ?? 0);
+      const nextY = event.touches[0]?.clientY ?? previousY;
+      scroll.target += (previousY - nextY) * 0.84;
+      stage.dataset.touchY = String(nextY);
     };
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "ArrowDown" || event.key === "PageDown") targetPosition += spacing * 0.35;
-      if (event.key === "ArrowUp" || event.key === "PageUp") targetPosition -= spacing * 0.35;
+      if (event.key === "ArrowDown" || event.key === "PageDown") scroll.target += layerGap * 0.35;
+      if (event.key === "ArrowUp" || event.key === "PageUp") scroll.target -= layerGap * 0.35;
     };
 
-    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    renderTunnel();
     if (!reducedMotion) gsap.ticker.add(renderTunnel);
-    else layers.forEach((layer, index) => gsap.set(layer, {
-      x: index === 1 ? 140 : 0,
-      y: index === 1 ? 55 : 0,
-      z: nearestZ - (index * spacing + spacing / 2),
-      scale: 0.82 + ((tunnelLength - (index * spacing + spacing / 2)) / tunnelLength) * 0.18,
-      autoAlpha: 1,
-    }));
-
-    if (!reducedMotion) {
-      stage.addEventListener("wheel", handleWheel, { passive: false });
-      stage.addEventListener("touchstart", handleTouchStart, { passive: true });
-      stage.addEventListener("touchmove", handleTouchMove, { passive: false });
-      stage.addEventListener("keydown", handleKeyDown);
-    }
+    window.addEventListener("wheel", handleWheel, { passive: true });
+    stage.addEventListener("touchstart", handleTouchStart, { passive: true });
+    stage.addEventListener("touchmove", handleTouchMove, { passive: true });
+    stage.addEventListener("keydown", handleKeyDown);
 
     return () => {
       gsap.ticker.remove(renderTunnel);
-      if (!reducedMotion) {
-        stage.removeEventListener("wheel", handleWheel);
-        stage.removeEventListener("touchstart", handleTouchStart);
-        stage.removeEventListener("touchmove", handleTouchMove);
-        stage.removeEventListener("keydown", handleKeyDown);
-      }
-      gsap.set(layers, { clearProps: "transform,opacity,visibility" });
+      window.removeEventListener("wheel", handleWheel);
+      stage.removeEventListener("touchstart", handleTouchStart);
+      stage.removeEventListener("touchmove", handleTouchMove);
+      stage.removeEventListener("keydown", handleKeyDown);
+      gsap.set(layers, { clearProps: "transform,visibility" });
     };
   }, []);
 
@@ -314,14 +322,15 @@ function InfiniteImageGallery() {
     <section className="image-slider-page" aria-labelledby="image-slider-title">
       <div className="image-slider-heading"><p>HAWKS YOUTH CLUB</p><h1 id="image-slider-title">MOVE AS ONE</h1></div>
       <div className="image-slider-field" ref={stageRef} aria-label="Scroll to move through the Hawks sports photo tunnel" tabIndex={0}>
-        {Array.from({ length: 2 }, (_, layerIndex) => (
+        {Array.from({ length: Math.max(6, Math.ceil(tunnelPhotos.length / tunnelImageCount)) }, (_, layerIndex) => (
           <div className="image-tunnel-layer" key={layerIndex} ref={(node) => { layersRef.current[layerIndex] = node; }}>
-            {tunnelPositions.map((position, photoIndex) => {
-              const photo = galleryPhotos[(layerIndex * tunnelPositions.length + photoIndex) % galleryPhotos.length];
-              return <figure className={`image-tunnel-photo image-tunnel-photo-${photoIndex + 1}`} key={`${layerIndex}-${photoIndex}`} style={{
-                "--photo-x": position.x, "--photo-y": position.y, "--photo-tilt": "0deg",
-              } as CSSProperties}>
-                <img src={photo.src} alt={photo.alt} loading={layerIndex < 2 ? "eager" : "lazy"} />
+            {Array.from({ length: tunnelImageCount }, (_, photoIndex) => {
+              const photoIndexInSet = (layerIndex % Math.ceil(tunnelPhotos.length / tunnelImageCount)) * tunnelImageCount + photoIndex;
+              if (photoIndexInSet >= tunnelPhotos.length) return null;
+              const photo = tunnelPhotos[photoIndexInSet];
+              return <figure className={`image-tunnel-photo image-tunnel-photo-${photoIndex + 1}`} key={`${layerIndex}-${photoIndex}`}>
+                <img src={photo.src} alt={photo.alt} loading={layerIndex < 8 ? "eager" : "lazy"} />
+                <div className="image-tunnel-overlay" aria-hidden="true" />
               </figure>;
             })}
           </div>
@@ -683,7 +692,7 @@ export function ClubPage({ page = "home" }: { page?: PageKind }) {
         <div className="loader-bottomline"><span className="loader-progress"><span className="loader-progress-fill" /></span><span>PREPARING YOUR NEXT MOVE</span><span>01 / 01</span></div>
       </div>}
       <header className={`site-header${isHome ? "" : " site-header-interior"}`} data-nav-theme={navTheme}>
-        <a className="site-logo" href="/" onClick={navigateClick} aria-label="Hawks Sports Club home"><img src="/images/hawks-logo-transparent.png" alt="Hawks Sports Club" /></a>
+        <a className="site-logo" href="/" onClick={navigateClick} aria-label="Hawks Youth Club home">Hawks Youth Club</a>
         <nav className="desktop-nav" aria-label="Primary navigation">{navigation.map((item) => <a href={item.href} onClick={navigateClick} key={item.label} aria-current={page === (item.href === "/" ? "home" : item.href.slice(1)) ? "page" : undefined}>{item.label}</a>)}</nav>
         <a className="header-cta" href="/pricing" onClick={navigateClick}><span>Join the club</span><ArrowUpRight className="header-cta-arrow" size={16} aria-hidden="true" /></a>
         <button className={`mobile-menu-button${menuOpen ? " is-open" : ""}`} onClick={toggleMenu} aria-label={menuOpen ? "Close navigation menu" : "Open navigation menu"} aria-expanded={menuOpen} aria-controls="mobile-navigation">

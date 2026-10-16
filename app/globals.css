@@ -7,9 +7,9 @@
 
 @media(max-width:760px){.hero{min-height:650px;background-position:58% center}.site-header{height:76px;padding:0 21px}.site-logo{width:88px}.desktop-nav,.header-cta{display:none}.mobile-menu-button{display:grid;place-items:center;margin-left:auto;width:43px;height:43px;border:1px solid rgba(255,255,255,.55);border-radius:50%;background:rgba(0,0,0,.16);color:var(--paper)}.mobile-nav{position:absolute;z-index:2;top:76px;left:0;display:flex;flex-direction:column;width:100%;padding:25px 21px 30px;background:rgba(9,9,9,.94);backdrop-filter:blur(12px)}.mobile-nav a{padding:11px 0;font:500 22px 'Barlow Condensed','Arial Narrow',sans-serif;text-transform:uppercase}.hero-title{bottom:20px;font-size:clamp(78px,18.2vw,136px);line-height:.73}.hero-intro{right:21px;bottom:218px;width:245px;font-size:12px}.hero-cta{right:21px;bottom:90px;height:56px}.hero-cta span{padding:0 14px;font-size:10px}.hero-cta svg{width:19px;height:19px;padding:18px;border-left-width:2px}.story-section,.events-section,.pricing-section,.blog-section{padding:82px 21px}.story-grid,.pricing-content{display:block;margin-top:36px}.story-grid h2,.section-heading h2,.pricing-content h2{font-size:clamp(65px,16vw,105px)}.story-copy{margin-top:32px}.story-copy p{font-size:16px}.story-stats{margin-top:72px}.story-stats div{gap:8px;padding:18px 6px 0 0}.story-stats div+div{padding-left:8px}.story-stats strong{font-size:50px}.story-stats span{font-size:8px}.section-heading{display:block}.section-heading h2{margin-top:36px}.event-list{margin-top:48px}.event-row{grid-template-columns:72px 1fr 27px;gap:13px;min-height:108px}.event-type{display:none}.event-row h3{font-size:25px}.event-row>a{width:28px;height:28px}.event-date{font-size:9px}.pricing-content>div{margin-top:34px}.pricing-content p{font-size:18px}.post-grid{grid-template-columns:1fr;margin-top:46px}.post{min-height:240px}.blog-section{padding-bottom:0}footer{grid-template-columns:1fr 1fr;padding:30px 21px;gap:22px}footer p{grid-column:1/-1;grid-row:2}footer>a:last-child{justify-self:end;font-size:9px}}
 
-.site-logo{display:block;width:118px;filter:brightness(0) invert(1)}.site-logo img,.footer-logo img{display:block;width:100%;height:auto}.footer-logo{display:block;width:118px}
+.site-logo{display:block;width:auto;color:currentColor;font:500 15px 'Poppins',Arial,sans-serif;letter-spacing:.01em;white-space:nowrap}.footer-logo{display:block;width:118px}.footer-logo img{display:block;width:100%;height:auto}
 
-@media(max-width:760px){.site-logo{width:88px}.footer-logo{width:104px}}
+@media(max-width:760px){.site-logo{font-size:13px}.header-cta{min-width:146px;height:54px;padding:0 10px;font-size:10px}.footer-logo{width:104px}}
 
 body,button,input,textarea,.desktop-nav,.header-cta,.mobile-nav a,.hero-title,.hero-intro,.hero-cta,.section-kicker,.story-grid h2,.story-grid h2 em,.section-heading h2,.section-heading h2 em,.pricing-content h2,.pricing-content h2 em,.story-copy a,.story-stats strong,.story-stats span,.event-date,.event-type,.dark-cta,.post>span,.post p,.post a,footer p,footer>a:last-child{font-family:'Poppins',Arial,sans-serif!important;font-style:normal!important;font-weight:400!important}
 
@@ -236,20 +236,22 @@ body,button,input,textarea,.desktop-nav,.header-cta,.mobile-nav a,.hero-title,.h
 .page-transition.is-revealing .page-transition-title-letter{translate:0 100%;transition-delay:calc(var(--letter-reverse-order)*.08s)}
 @media(prefers-reduced-motion:reduce){.page-transition{display:none}}
 
-/* Scroll-driven image tunnel: cross-shaped layers travel forward through perspective, then wrap behind the viewer. */
+/* CSS perspective tunnel modeled on the tutorial: cross-shaped layers move toward the viewer and loop behind. */
 .image-slider-page{position:relative;width:100%;height:100svh;min-height:560px;overflow:hidden;background:#050505;color:var(--paper);overscroll-behavior:contain}
 .image-slider-heading{position:absolute;top:clamp(106px,14vh,144px);left:clamp(20px,4vw,58px);z-index:2;display:flex;flex-direction:column;gap:6px}
 .image-slider-heading p{margin:0;color:#aaa8a3;font:9px 'DM Mono',monospace;letter-spacing:.12em;text-transform:uppercase}
 .image-slider-heading h1{margin:0;color:#777;font:500 8px 'DM Mono',monospace;letter-spacing:.13em;text-transform:uppercase}
-.image-slider-field{position:absolute;inset:0;overflow:hidden;perspective:1500px;perspective-origin:50% 51%;transform-style:preserve-3d;touch-action:none;outline:none}
+.image-slider-field{position:absolute;inset:0;overflow:hidden;perspective:1000px;perspective-origin:50% 50%;transform-style:preserve-3d;touch-action:pan-y;outline:none}
 .image-tunnel-layer{position:absolute;top:50%;left:50%;width:0;height:0;transform-style:preserve-3d;will-change:transform}
-.image-tunnel-photo{position:absolute;top:50%;left:50%;width:clamp(110px,15vw,205px);aspect-ratio:4/5;margin:0;overflow:hidden;background:#151515;transform:translate3d(calc(-50% + var(--photo-x)),calc(-50% + var(--photo-y)),0) rotate(var(--photo-tilt));transform-origin:center;backface-visibility:hidden;will-change:transform}
-.image-tunnel-photo-2,.image-tunnel-photo-4{width:clamp(118px,16vw,220px);aspect-ratio:1/1.08}
-.image-tunnel-photo-3{width:clamp(78px,10vw,140px);aspect-ratio:1/1.2}
-.image-tunnel-photo-5{width:clamp(95px,13vw,175px);aspect-ratio:1/1.1}
-.image-tunnel-photo img{display:block;width:100%;height:100%;object-fit:cover;filter:saturate(.76) contrast(1.04)}
-@media(max-width:760px){.image-slider-heading{top:100px;left:18px}.image-slider-heading p{font-size:7px}.image-slider-field{perspective:1000px}.image-tunnel-photo{width:clamp(88px,29vw,125px)}.image-tunnel-photo-2,.image-tunnel-photo-4{width:clamp(94px,31vw,132px)}.image-tunnel-photo-3{width:clamp(64px,21vw,88px)}.image-tunnel-photo-5{width:clamp(78px,25vw,106px)}}
-@media(prefers-reduced-motion:reduce){.image-slider-field{touch-action:pan-y}.image-tunnel-layer{opacity:1}.image-tunnel-photo{backface-visibility:visible}}
+.image-tunnel-photo{position:absolute;top:0;left:0;width:clamp(170px,21vw,310px);height:clamp(120px,15vw,220px);margin:0;overflow:hidden;background:#151515;transform-style:preserve-3d;backface-visibility:hidden;will-change:transform}
+.image-tunnel-photo-1{transform:translate(-50%,-50%) translateY(-31vh)}
+.image-tunnel-photo-2{transform:translate(-50%,-50%) translateX(37vw)}
+.image-tunnel-photo-3{transform:translate(-50%,-50%) translateY(31vh)}
+.image-tunnel-photo-4{transform:translate(-50%,-50%) translateX(-37vw)}
+.image-tunnel-photo img{display:block;width:100%;height:100%;object-fit:cover;filter:saturate(.78) contrast(1.04)}
+.image-tunnel-overlay{position:absolute;inset:0;background:#000;opacity:var(--layer-overlay,0);pointer-events:none}
+@media(max-width:760px){.image-slider-heading{top:100px;left:18px}.image-slider-heading p{font-size:7px}.image-slider-field{perspective:850px}.image-tunnel-photo{width:clamp(112px,32vw,180px);height:clamp(82px,23vw,135px)}.image-tunnel-photo-1{transform:translate(-50%,-50%) translateY(-29vh)}.image-tunnel-photo-2{transform:translate(-50%,-50%) translateX(36vw)}.image-tunnel-photo-3{transform:translate(-50%,-50%) translateY(29vh)}.image-tunnel-photo-4{transform:translate(-50%,-50%) translateX(-36vw)}}
+@media(prefers-reduced-motion:reduce){.image-tunnel-layer{will-change:auto}.image-tunnel-photo{backface-visibility:visible}}
 
 /* Mobile navigation opens as a soft panel reveal, with staggered link entrances. */
 @media(max-width:760px){
@@ -376,8 +378,7 @@ body,button,input,textarea,.desktop-nav,.header-cta,.mobile-nav a,.hero-title,.h
 .site-header-interior{background:transparent;backdrop-filter:none}
 .site-header[data-nav-theme="light"]{color:var(--ink)}
 .site-header[data-nav-theme="orange"]{color:#fff}
-.site-header .site-logo{transition:filter .6s cubic-bezier(.22,1,.36,1)}
-.site-header[data-nav-theme="light"] .site-logo{filter:brightness(0)}
+.site-header .site-logo{transition:color .6s cubic-bezier(.22,1,.36,1)}
 .desktop-nav a{color:currentColor;opacity:1;transition:color .2s cubic-bezier(.22,1,.36,1),opacity .2s ease}
 .desktop-nav a:hover{color:var(--orange);opacity:1}
 .desktop-nav a:focus-visible,.header-cta:focus-visible{outline:2px solid currentColor;outline-offset:5px}
