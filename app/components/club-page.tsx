@@ -6,16 +6,17 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faBaseballBatBall, faBasketball, faChessKnight, faDumbbell, faFutbol, faGamepad, faPersonRunning, faTableTennisPaddleBall } from "@fortawesome/free-solid-svg-icons";
+import { faBaseballBatBall, faBasketball, faChessKnight, faFutbol, faGamepad, faLightbulb, faPalette, faTableTennisPaddleBall } from "@fortawesome/free-solid-svg-icons";
 import { ArrowUpRight, BookOpen, Mail, Menu, Trophy, UsersRound, X } from "lucide-react";
 import FooterHands from "./footer-hands";
 import { usePageTransition, transitionClick } from "./page-transition";
 
-type PageKind = "home" | "story" | "events" | "pricing" | "blog" | "image-slider";
+type PageKind = "home" | "story" | "events" | "pricing" | "blog" | "image-slider" | "team";
 
 const navigation = [
   { label: "Home", href: "/" },
   { label: "Story", href: "/story" },
+  { label: "Team", href: "/team" },
   { label: "Events", href: "/events" },
   { label: "Join", href: "/pricing" },
   { label: "Gallery", href: "/image-slider" },
@@ -26,8 +27,8 @@ const sports = [
   { name: "Cricket", icon: faBaseballBatBall },
   { name: "Basketball", icon: faBasketball },
   { name: "Badminton", icon: faTableTennisPaddleBall },
-  { name: "Athletics", icon: faPersonRunning },
-  { name: "Strength", icon: faDumbbell },
+  { name: "Creative Arts & Expression", icon: faPalette },
+  { name: "Entrepreneurship", icon: faLightbulb },
   { name: "Chess", icon: faChessKnight },
   { name: "Gaming", icon: faGamepad },
 ];
@@ -58,16 +59,9 @@ const galleryPhotos = [
 
 const programs = [
   { number: "001", title: "Team sports", text: "Learn the game, trust your teammates, and discover what you can do together.", image: "https://theperformancelab.ca/parallax/i1.webp", alt: "Team sports practice" },
-  { number: "002", title: "Athletics", text: "Build speed, coordination, and confidence one small personal best at a time.", image: "https://theperformancelab.ca/parallax/i2.webp", alt: "Athlete running" },
-  { number: "003", title: "Strength & movement", text: "Move well, get stronger, and build habits that support an active life.", image: "https://theperformancelab.ca/parallax/i3.webp", alt: "Athlete strength training" },
-  { number: "004", title: "Community sessions", text: "Open sessions to try something new, meet people, and find your place in the club.", image: "https://theperformancelab.ca/parallax/i6.webp", alt: "Athletes at a community session" },
-];
-
-const steps = [
-  { title: "Say hello", note: "Start with a conversation", text: "Tell us what you enjoy, what you want to try, and what you hope to get from being part of a team." },
-  { title: "Find your game", note: "Try a session", text: "Meet the coaches and other young people, explore a program, and get a feel for how we train." },
-  { title: "Build your rhythm", note: "Learn by doing", text: "Show up, practise the basics, and set small goals that help you grow at your own pace." },
-  { title: "Grow together", note: "Keep moving forward", text: "Celebrate progress, support your teammates, and discover what you want to take on next." },
+  { number: "002", title: "Creative Arts & Expression", text: "Explore art, storytelling, and hands-on projects that spark imagination and help young people express themselves.", image: "/images/programs/creative-arts.jpg", alt: "Art materials ready for a creative workshop" },
+  { number: "003", title: "Entrepreneurship", text: "Turn ideas into action. Learn creativity, problem-solving, teamwork, and the basics of bringing a project to life.", image: "/images/programs/entrepreneurship.jpg", alt: "Open notebook with plans and ideas" },
+  { number: "004", title: "Community sessions", text: "Open sessions to try something new, meet people, and find your place in the club.", image: "https://images.unsplash.com/photo-1680024436315-fb06267264b2?auto=format&fit=crop&fm=jpg&q=80&w=1200", alt: "Young people playing soccer together at a community session" },
 ];
 
 const journal = [
@@ -77,8 +71,8 @@ const journal = [
 ];
 
 const footerGroups = [
-  { title: "Club", links: [["Our story", "/story"], ["Our people", "/story"], ["Your first steps", "/pricing"], ["Get involved", "/pricing"]] },
-  { title: "Programs", links: [["Team sports", "/events"], ["Athletics", "/events"], ["Strength & movement", "/events"], ["Community sessions", "/events"]] },
+  { title: "Club", links: [["Our story", "/story"], ["Our people", "/team"], ["Your first steps", "/pricing"], ["Get involved", "/pricing"]] },
+  { title: "Programs", links: [["Team sports", "/events"], ["Creative Arts & Expression", "/events"], ["Entrepreneurship", "/events"], ["Community sessions", "/events"]] },
   { title: "Explore", links: [["Club journal", "/blog"], ["Upcoming events", "/events"], ["For families", "/pricing"], ["Contact Hawks", "/pricing"]] },
 ];
 
@@ -198,7 +192,7 @@ function OrbitalGallery() {
   }, []);
 
   return (
-    <section className="orbit-gallery-section" id="gallery" ref={sectionRef} aria-label="Hawks sports photo gallery">
+    <section className="orbit-gallery-section" id="gallery" ref={sectionRef} data-nav-theme="dark" aria-label="Hawks sports photo gallery">
       <div className="orbit-gallery-stage" ref={stageRef}>
         <div className="orbit-gallery-view">
           <div className="orbit-gallery-ring" ref={ringRef} role="list" aria-label="Hawks sports photo carousel">
@@ -412,7 +406,7 @@ function QuoteTrail() {
 
 function JoinClubApplication() {
   return (
-    <section className="join-application" aria-labelledby="join-application-title">
+    <section className="join-application" data-nav-theme="light" aria-labelledby="join-application-title">
       <div className="join-application-heading">
         <p className="eyebrow">HAWKS YOUTH CLUB · MEMBERSHIP</p>
         <h1 id="join-application-title">Make your<br /><em>next move.</em></h1>
@@ -444,7 +438,7 @@ function JoinClubApplication() {
           <select id="club-interest" name="Activity of interest" defaultValue="" required>
             <option value="" disabled>Select an activity</option>
             <option>Football</option><option>Cricket</option><option>Basketball</option><option>Badminton</option>
-            <option>Athletics</option><option>Strength & movement</option><option>Chess</option><option>Gaming</option><option>Not sure yet</option>
+            <option>Creative Arts & Expression</option><option>Entrepreneurship</option><option>Chess</option><option>Gaming</option><option>Not sure yet</option>
           </select>
         </div>
         <div className="join-form-field join-form-field-wide">
@@ -461,39 +455,41 @@ function JoinClubApplication() {
 function StoryPageContent({ onNavigate }: { onNavigate: (event: MouseEvent<HTMLAnchorElement>) => void }) {
   return (
     <div className="story-page">
-      <section className="story-about-hero">
+      <section className="story-about-hero" data-nav-theme="light">
         <p className="story-about-kicker">HAWKS YOUTH CLUB <span>·</span> OUR STORY</p>
         <div className="story-about-hero-grid">
           <h1>MADE TO<br />MOVE <em>TOGETHER.</em></h1>
           <div className="story-about-mission">
             <p className="story-about-label">OUR MISSION</p>
-            <p>We make sport a place where every young person can find their confidence, discover what they love, and grow alongside a team that has their back.</p>
+            <p>Founded in Bhagalpur in 2019 by Mr. O.P. Singh, Hawks Youth Club helps children grow into confident, capable individuals.</p>
             <a href="/pricing" onClick={onNavigate}>FIND YOUR PLACE <ArrowUpRight size={16} /></a>
           </div>
         </div>
         <span className="story-about-index">01 — 04 <span>SCROLL TO EXPLORE</span></span>
       </section>
 
-      <section className="story-about-gallery" aria-label="Life at Hawks">
+      <section className="story-about-gallery" data-nav-theme="light" aria-label="Life at Hawks">
         <figure className="story-about-photo story-about-photo-one"><img src={collage[0].src} alt="Young athletes sharing a moment after practice" /><figcaption>SHOW UP FOR EACH OTHER <span>01</span></figcaption></figure>
         <figure className="story-about-photo story-about-photo-two"><img src={collage[1].src} alt="Young athlete running during training" /><figcaption>FIND YOUR OWN PACE <span>02</span></figcaption></figure>
         <figure className="story-about-photo story-about-photo-three"><img src={collage[3].src} alt="Coach supporting an athlete through practice" /><figcaption>GROW WITH GOOD PEOPLE <span>03</span></figcaption></figure>
       </section>
 
-      <section className="story-about-intro">
-        <p className="story-about-label">MORE ABOUT US</p>
+      <section className="story-about-intro" data-nav-theme="light">
+        <p className="story-about-label">INTRODUCTION</p>
         <div>
-          <h2>SPORT IS THE START.<br /><em>Belonging is the point.</em></h2>
-          <p>Hawks is a youth sports club built around the belief that movement can open doors. We bring young people together to learn the basics, take on a challenge, and experience the joy of being part of a team.</p>
-          <p>There’s room to be new, to ask questions, to make mistakes, and to keep going. Our coaches and community make sure every young person has the support to grow at their own pace.</p>
+          <h2>Every child deserves<br /><em>room to grow.</em></h2>
+          <p><strong>Hawks Youth Club, Bhagalpur</strong> was founded in 2019 by <strong>Mr. O.P. Singh</strong> with a vision to nurture children and help them grow into confident, capable individuals.</p>
+          <p>The club was created to provide a platform where every child gets <strong>equal opportunities for all-round development</strong> — not just in academics, but in sports, personality development, and essential life skills.</p>
+          <p>Our aim is to build <strong>discipline, teamwork, and leadership</strong> through sports and extracurricular activities, while also focusing on <strong>character building, communication, and social values</strong>.</p>
+          <p>At Hawks Youth Club, we believe that with the right guidance, mentorship, and exposure, children can achieve excellence and become responsible citizens who contribute meaningfully to society at large.</p>
         </div>
       </section>
 
-      <section className="story-about-marquee" aria-label="Move, learn, belong, grow">
+      <section className="story-about-marquee" data-nav-theme="light" aria-label="Move, learn, belong, grow">
         <div className="story-about-marquee-track"><span>MOVE · LEARN · BELONG · GROW ·&nbsp;</span><span aria-hidden="true">MOVE · LEARN · BELONG · GROW ·&nbsp;</span></div>
       </section>
 
-      <section className="story-about-approach">
+      <section className="story-about-approach" data-nav-theme="light">
         <div className="story-about-approach-heading">
           <p className="story-about-label">HOW WE DO IT</p>
           <h2>A CLUB THAT<br />GROWS <em>with you.</em></h2>
@@ -506,7 +502,7 @@ function StoryPageContent({ onNavigate }: { onNavigate: (event: MouseEvent<HTMLA
         </div>
       </section>
 
-      <section className="story-about-cta">
+      <section className="story-about-cta" data-nav-theme="light">
         <p className="story-about-label">YOUR NEXT MOVE STARTS HERE</p>
         <h2>Come find<br /><em>your team.</em></h2>
         <a href="/pricing" onClick={onNavigate}>JOIN THE CLUB <ArrowUpRight size={17} /></a>
@@ -515,11 +511,62 @@ function StoryPageContent({ onNavigate }: { onNavigate: (event: MouseEvent<HTMLA
   );
 }
 
+const officeBearers = [
+  { role: "Chief Patron", name: "Mr O.P. Singh" },
+  { role: "President", name: "Mr. Arnav Kejriwal" },
+  { role: "1st Vice President", name: "Mr. Rishav Chaudhary" },
+  { role: "2nd Vice President", name: "Mr. Vishal Vaibhav" },
+  { role: "3rd Vice President", name: "Ms Sumedha Modi" },
+  { role: "Secretary General", name: "Dikshant Shekhar" },
+  { role: "Treasurer", name: "Abhinav Singh" },
+  { role: "Public Relation Officer", name: "Akshar Divya" },
+];
+
+const executiveCommittee = [
+  "Mr Rajarajeshwar Shivam Shroff",
+  "Mr Yashraj Shroff",
+  "Mr Rasendu Agarwal",
+  "Mr Manan Srivastava",
+  "Mr Labya Kumar",
+  "Mr Harshit Bajoriya",
+  "Mr Harsh Jain",
+  "Mr Krishana Banka",
+  "Mr Aditya Shah",
+  "Mr Piyush Sarogi",
+  "Mr Kumar Aditya",
+  "Mr Kumar Amitesh",
+  "Mr Rahul Sharma",
+  "Mr Aaditya",
+  "Mr Yash",
+];
+
+function TeamPageContent() {
+  return <div className="team-page">
+    <section className="team-page-hero" data-nav-theme="dark">
+      <p className="team-page-kicker">HAWKS YOUTH CLUB <span>·</span> BHAGALPUR</p>
+      <div className="team-page-hero-main">
+        <div><p className="eyebrow">THE PEOPLE WHO LEAD US</p><h1>Our<br /><em>team.</em></h1></div>
+        <p className="team-page-intro">Meet the office bearers and executive committee guiding Hawks Youth Club forward.</p>
+      </div>
+      <div className="team-page-term"><span>OFFICE BEARERS OF THE CLUB</span><span>2026 — 2028</span></div>
+    </section>
+    <section className="team-officers" data-nav-theme="dark" aria-labelledby="team-officers-title">
+      <div className="team-section-heading"><p className="eyebrow">01 — Leadership</p><h2 id="team-officers-title">Office bearers<span>.</span></h2></div>
+      <div className="team-officer-grid">{officeBearers.map((person, index) => <article className="team-officer" key={person.role}><span className="team-card-index">{String(index + 1).padStart(2, "0")}</span><div><p>{person.role}</p><h3>{person.name}</h3></div><span className="team-card-mark" aria-hidden="true">↗</span></article>)}</div>
+    </section>
+    <section className="team-committee" data-nav-theme="light" aria-labelledby="team-committee-title">
+      <div className="team-section-heading"><p className="eyebrow">02 — The wider team</p><h2 id="team-committee-title">Executive<br /><em>committee.</em></h2><p>Working together to create more opportunities for every young person in our community.</p></div>
+      <ol className="team-committee-list">{executiveCommittee.map((name, index) => <li key={name}><span>{String(index + 1).padStart(2, "0")}</span><h3>{name}</h3><span aria-hidden="true">↗</span></li>)}</ol>
+    </section>
+  </div>;
+}
+
 export function ClubPage({ page = "home" }: { page?: PageKind }) {
   const lenis = useRef<Lenis | null>(null);
   const revealRoot = useRef<HTMLElement>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuMounted, setMenuMounted] = useState(false);
+  const [navTheme, setNavTheme] = useState<"dark" | "light" | "orange">(page === "story" || page === "pricing" ? "light" : "dark");
   const menuCloseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const navigate = usePageTransition();
   const navigateClick = transitionClick(navigate);
@@ -539,6 +586,31 @@ export function ClubPage({ page = "home" }: { page?: PageKind }) {
   useEffect(() => () => {
     if (menuCloseTimer.current) clearTimeout(menuCloseTimer.current);
   }, []);
+
+  useEffect(() => {
+    const root = revealRoot.current;
+    const header = root?.querySelector<HTMLElement>(".site-header");
+    if (!root || !header) return;
+
+    const sections = Array.from(root.querySelectorAll<HTMLElement>("[data-nav-theme]:not(.site-header)"));
+    const updateTheme = () => {
+      const headerLine = Math.min(window.innerHeight - 1, Math.max(1, header.getBoundingClientRect().height / 2));
+      const current = sections.find((section) => {
+        const bounds = section.getBoundingClientRect();
+        return bounds.top <= headerLine && bounds.bottom > headerLine;
+      });
+      if (current) setNavTheme(current.dataset.navTheme as "dark" | "light" | "orange");
+    };
+
+    setNavTheme(page === "story" || page === "pricing" ? "light" : "dark");
+    updateTheme();
+    window.addEventListener("scroll", updateTheme, { passive: true });
+    window.addEventListener("resize", updateTheme);
+    return () => {
+      window.removeEventListener("scroll", updateTheme);
+      window.removeEventListener("resize", updateTheme);
+    };
+  }, [page]);
 
   useEffect(() => {
     if (page === "image-slider") return;
@@ -603,10 +675,10 @@ export function ClubPage({ page = "home" }: { page?: PageKind }) {
         <div className="loader-main"><span className="loader-label">MADE TO MOVE</span><span className="loader-counter">000</span><span className="loader-percent">%</span></div>
         <div className="loader-bottomline"><span className="loader-progress"><span className="loader-progress-fill" /></span><span>PREPARING YOUR NEXT MOVE</span><span>01 / 01</span></div>
       </div>}
-      <header className={`site-header${isHome ? "" : " site-header-interior"}`}>
+      <header className={`site-header${isHome ? "" : " site-header-interior"}`} data-nav-theme={navTheme}>
         <a className="site-logo" href="/" onClick={navigateClick} aria-label="Hawks Sports Club home"><img src="/images/hawks-logo-transparent.png" alt="Hawks Sports Club" /></a>
         <nav className="desktop-nav" aria-label="Primary navigation">{navigation.map((item) => <a href={item.href} onClick={navigateClick} key={item.label} aria-current={page === (item.href === "/" ? "home" : item.href.slice(1)) ? "page" : undefined}>{item.label}</a>)}</nav>
-        <a className="header-cta" href="/pricing" onClick={navigateClick}>Join the club</a>
+        <a className="header-cta" href="/pricing" onClick={navigateClick}><span>Join the club</span><ArrowUpRight className="header-cta-arrow" size={16} aria-hidden="true" /></a>
         <button className={`mobile-menu-button${menuOpen ? " is-open" : ""}`} onClick={toggleMenu} aria-label={menuOpen ? "Close navigation menu" : "Open navigation menu"} aria-expanded={menuOpen} aria-controls="mobile-navigation">
           <span className="menu-icon-lines" aria-hidden="true"><span /><span /></span>
         </button>
@@ -616,14 +688,15 @@ export function ClubPage({ page = "home" }: { page?: PageKind }) {
       </header>
       {page === "image-slider" && <InfiniteImageGallery />}
       {page === "story" && <StoryPageContent onNavigate={navigateClick} />}
-      {isHome && <section className="hero" id="home">
+      {page === "team" && <TeamPageContent />}
+      {isHome && <section className="hero" id="home" data-nav-theme="dark">
         <img className="hero-backdrop-image" src="/images/runner-hero.jpg" alt="" aria-hidden="true" />
         <div className="hero-title" aria-label="Where champions are made"><span>Where</span><span>Champions</span><span>Are Made</span></div>
         <div className="hero-intro"><p>Hawks Sports Club is built for young people ready to move with focus, purpose and confidence.</p><p>Find your team, challenge your limits and make your next move count.</p></div>
           <a className="hero-cta" href="#programs" onClick={scrollTo}><span>Unlock your potential</span><ArrowUpRight size={22} strokeWidth={1.75} /></a>
       </section>}
 
-      {(isHome) && <section className="sports-strip" aria-label="Sports and activities at Hawks">
+      {(isHome) && <section className="sports-strip" data-nav-theme="light" aria-label="Sports and activities at Hawks">
         <div className="sports-track">
           {[0, 1].map((set) => (
             <div className="sports-set" key={set} aria-hidden={set === 1}>
@@ -639,7 +712,7 @@ export function ClubPage({ page = "home" }: { page?: PageKind }) {
         </div>
       </section>}
 
-      {isHome && <section className="intro-section" id="story">
+      {isHome && <section className="intro-section" id="story" data-nav-theme="light">
         <IntroMovingImage className="intro-float intro-float-top intro-parallax-image" src={introSportsImages.cricket} alt="Cricket ball resting in vivid green grass" />
         <div className="intro-lead">
           <IntroMovingImage className="intro-lead-image intro-parallax-image" src={introSportsImages.badminton} alt="Badminton shuttlecocks on a green court" />
@@ -653,40 +726,28 @@ export function ClubPage({ page = "home" }: { page?: PageKind }) {
         <IntroMotionBand />
       </section>}
 
-      {(isHome || page === "events") && <section className="program-section" id="programs">
+      {(isHome || page === "events") && <section className="program-section" id="programs" data-nav-theme="dark">
         <div className="program-heading"><div><p className="eyebrow">01 — Find your game</p><h2>Room to<br /><em>move.</em></h2></div><p className="section-intro">There’s more than one way to be an athlete. Explore a program, learn the fundamentals, and find the kind of movement that makes you want to come back.</p></div>
         <div className="program-grid">{programs.map((program) => <article className="program-card" key={program.number}><div className="program-image"><img src={program.image} alt={program.alt} loading="lazy" /></div><div className="program-meta"><span>PROGRAM</span><span>{program.number}</span></div><h3>{program.title}</h3><p>{program.text}</p><a href="/pricing" onClick={navigateClick}>Explore the program <ArrowUpRight size={16} /></a></article>)}</div>
       </section>}
 
       {isHome && <OrbitalGallery />}
 
-      {isHome && <section className="people-section">
-        <div className="people-photo"><img src="https://theperformancelab.ca/parallax/i4.webp" alt="A coach encouraging an athlete" loading="lazy" /></div>
-        <div className="people-copy"><p className="eyebrow">02 — People make the club</p><h2>Good sport<br />starts with<br /><em>good people.</em></h2><p>Our coaches and volunteers help make every session a place to learn, try, and feel supported. We value effort, respect, teamwork, and the courage to have a go.</p><a className="light-link" href="/pricing" onClick={navigateClick}>Meet the Hawks community <ArrowUpRight size={17} /></a></div>
-        <div className="people-stamp"><strong>PLAY<br />AS ONE</strong><span>HAWKS SPORTS CLUB</span></div>
-      </section>}
-
-      {isHome && <section className="journey-section" id="journey">
-        <div className="journey-heading"><p className="eyebrow">03 — Your first steps</p><h2>Find your place.<br /><em>Then take flight.</em></h2><p>Starting something new should feel easy. Here’s how to get involved and find the right fit.</p></div>
-        <div className="journey-steps">{steps.map((step, index) => <article className="journey-step" key={step.title}><span className="step-number">{String(index + 1).padStart(3, "0")}</span><div><span className="step-note">{step.note}</span><h3>{step.title}</h3><p>{step.text}</p></div><span className="step-arrow"><ArrowUpRight size={20} /></span></article>)}</div>
-        <a className="orange-link" href="#join" onClick={scrollTo}>Take your first step <ArrowUpRight size={18} /></a>
-      </section>}
-
-      {isHome && <section className="quote-section"><p className="eyebrow">A note from the club</p><QuoteTrail /><div className="quote-byline"><span className="quote-mark">H</span><span>Hawks Club<br /><small>Young athlete</small></span></div></section>}
+      {isHome && <section className="quote-section" data-nav-theme="dark"><p className="eyebrow">A note from the club</p><QuoteTrail /><div className="quote-byline"><span className="quote-mark">H</span><span>O.P Singh<br /><small>Founder</small></span></div></section>}
 
       {page === "blog" && <section className="journal-section" id="journal"><div className="journal-heading"><div><p className="eyebrow">04 — Notes from the club</p><h2>Keep<br /><em>moving.</em></h2></div><a className="text-link" href="/pricing" onClick={navigateClick}>More from Hawks <ArrowUpRight size={17} /></a></div><div className="journal-grid">{journal.map((post) => <article className="journal-card" key={post.number}><div className="journal-art"><span className="journal-art-number">{post.number}</span><span className="journal-orbit" /></div><div className="journal-meta"><span>{post.tag}</span><span>{post.number}</span></div><h3>{post.title}</h3><a href="/story" onClick={navigateClick}>Read the story <ArrowUpRight size={16} /></a></article>)}</div></section>}
 
-      {isHome && <section className="join-section" id="join"><div><p className="eyebrow">Your next move starts here</p><h2>Come find<br /><em>your team.</em></h2></div><div className="join-copy"><p>New to sport or ready for a new challenge? There’s a place for you at Hawks.</p><a className="dark-cta" href="mailto:hello@hawksclub.in">Get in touch <ArrowUpRight size={19} /></a><span>Families and young athletes are welcome to reach out.</span></div></section>}
+      {isHome && <section className="join-section" id="join" data-nav-theme="orange"><div><p className="eyebrow">Your next move starts here</p><h2>Come find<br /><em>your team.</em></h2></div><div className="join-copy"><p>New to sport or ready for a new challenge? There’s a place for you at Hawks.</p><a className="dark-cta" href="mailto:hello@hawksclub.in">Get in touch <ArrowUpRight size={19} /></a><span>Families and young athletes are welcome to reach out.</span></div></section>}
 
       {page === "pricing" && <JoinClubApplication />}
 
-      {page !== "image-slider" && page !== "story" && <footer className="hawks-footer" id="footer">
+      {page !== "image-slider" && page !== "story" && <footer className="hawks-footer" id="footer" data-nav-theme="dark">
         <div className="hawks-footer-cta"><h2>Hawks Together.<br />Rise Together.</h2><div className="hawks-footer-actions"><a className="hawks-footer-secondary" href="/events" onClick={navigateClick}>Explore programs</a><a className="hawks-footer-primary" href="/pricing" onClick={navigateClick}>Join the club</a></div></div>
         <FooterHands />
         <div className="hawks-footer-content">
-          <ul className="hawks-footer-quicklinks">{footerQuickLinks.map(({ title, href, icon: Icon }) => <li key={title}><a href={href} onClick={href.startsWith("/") ? navigateClick : undefined}><Icon size={18} strokeWidth={1.7} /><span>{title}</span><span className="hawks-footer-arrow"><FooterArrow /></span></a></li>)}</ul>
+          <ul className="hawks-footer-quicklinks">{footerQuickLinks.map(({ title, href, icon: Icon }) => <li className={title === "Programs" || title === "Club journal" ? "footer-mobile-hide" : undefined} key={title}><a href={href} onClick={href.startsWith("/") ? navigateClick : undefined}><Icon size={18} strokeWidth={1.7} /><span>{title}</span><span className="hawks-footer-arrow"><FooterArrow /></span></a></li>)}</ul>
           <div className="hawks-footer-link-grid">
-            {footerGroups.map((group) => <div className="hawks-footer-link-group" key={group.title}><h3>{group.title}</h3><ul>{group.links.map(([label, href]) => <li key={label}><a href={href} onClick={navigateClick}>{label}</a></li>)}</ul></div>)}
+            {footerGroups.map((group) => <div className={`hawks-footer-link-group${group.title === "Programs" ? " footer-mobile-hide" : ""}`} key={group.title}><h3>{group.title}</h3><ul>{group.links.map(([label, href]) => <li className={label === "Club journal" ? "footer-mobile-hide" : undefined} key={label}><a href={href} onClick={navigateClick}>{label}</a></li>)}</ul></div>)}
             <div className="hawks-footer-link-group"><h3>Contact</h3><ul><li><a href="mailto:hello@hawksclub.in">hello@hawksclub.in</a></li><li><span>Families and young athletes are welcome.</span></li><li><span>Come find your team.</span></li><li><a href="/pricing" onClick={navigateClick}>Get in touch</a></li></ul></div>
           </div>
           <p className="hawks-footer-copyright">© 2026 Hawks Youth Club. All rights reserved.</p>
