@@ -104,7 +104,9 @@ function IntroMovingImage({ src, alt, className }: { src: string; alt: string; c
 function OrbitalGallery() {
   const sectionRef = useRef<HTMLElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
+  const ringRef = useRef<HTMLDivElement>(null);
   const cardsRef = useRef<(HTMLDivElement | null)[]>([]);
+  const [activeIndex, setActiveIndex] = useState(0);
 
   useEffect(() => {
     const section = sectionRef.current;
@@ -113,68 +115,100 @@ function OrbitalGallery() {
 
     gsap.registerPlugin(ScrollTrigger);
     const cards = cardsRef.current.filter((card): card is HTMLDivElement => card !== null);
-    const drawOrbit = (progress: number) => {
-      const width = stage.clientWidth;
-      const height = stage.clientHeight;
-      const mobile = window.innerWidth < 760;
-      const radiusX = width * (mobile ? 0.36 : 0.39);
-      const radiusY = height * (mobile ? 0.29 : 0.32);
-      const tilt = mobile ? 0.48 : 0.58;
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    let targetRotation = 0;
+    let rotation = 0;
+    let targetTiltX = 0;
+    let targetTiltY = 0;
+    let tiltX = 0;
+    let tiltY = 0;
+    let frame = 0;
+    let lastFrameTime = 0;
 
-      cards.forEach((card, index) => {
-        const angle = (index / cards.length) * Math.PI * 2 + progress * Math.PI * 2;
-        const depth = Math.sin(angle);
-        const x = Math.cos(angle) * radiusX;
-        // A tilted circular plane: vertical position and camera depth both come
-        // from the same orbit angle, which creates the donut's slanted opening.
-        const y = depth * radiusY * Math.cos(tilt);
-        const z = depth * radiusY * Math.sin(tilt) * 1.65;
-        const scale = 0.68 + ((depth + 1) / 2) * 0.5;
-        gsap.set(card, {
-          x, y, z, scale,
-          rotation: Math.sin(angle) * -7 + Math.cos(angle) * 3,
-          zIndex: Math.round(20 + depth * 18),
-          autoAlpha: 0.56 + ((depth + 1) / 2) * 0.44,
-        });
-      });
+    const render = (time: number) => {
+      frame = 0;
+      const elapsed = lastFrameTime ? Math.min(64, time - lastFrameTime) : 16.67;
+      lastFrameTime = time;
+      const frameScale = elapsed / 16.67;
+      const scrollEase = reducedMotion ? 1 : 1 - Math.pow(1 - 0.2, frameScale);
+      const pointerEase = reducedMotion ? 1 : 1 - Math.pow(1 - 0.16, frameScale);
+      rotation += (targetRotation - rotation) * scrollEase;
+      tiltX += (targetTiltX - tiltX) * pointerEase;
+      tiltY += (targetTiltY - tiltY) * pointerEase;
+      stage.style.setProperty("--ring-rotation", `${rotation}deg`);
+      stage.style.setProperty("--ring-tilt-x", `${tiltX}deg`);
+      stage.style.setProperty("--ring-tilt-y", `${tiltY}deg`);
+      if (Math.abs(targetRotation - rotation) > 0.05 || Math.abs(targetTiltX - tiltX) > 0.02 || Math.abs(targetTiltY - tiltY) > 0.02) {
+        frame = window.requestAnimationFrame(render);
+      }
     };
 
-    drawOrbit(0);
-    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (reducedMotion) return () => { gsap.set(cards, { clearProps: "transform" }); };
+    const scheduleRender = () => {
+      if (!frame) frame = window.requestAnimationFrame(render);
+    };
+
+    const updateProgress = (progress: number) => {
+      const turn = reducedMotion ? 180 : 540;
+      targetRotation = -progress * turn;
+      const cardStep = 360 / cards.length;
+      const nextIndex = Math.round((progress * turn) / cardStep) % cards.length;
+      setActiveIndex((current) => current === nextIndex ? current : nextIndex);
+      scheduleRender();
+    };
 
     const trigger = ScrollTrigger.create({
       trigger: section,
       start: "top top",
-      end: "+=2200",
-      pin: true,
-      scrub: 1,
-      anticipatePin: 1,
+      end: "bottom bottom",
       invalidateOnRefresh: true,
-      onUpdate: (self) => drawOrbit(self.progress),
-      onRefresh: (self) => drawOrbit(self.progress),
+      onUpdate: (self) => updateProgress(self.progress),
+      onRefresh: (self) => updateProgress(self.progress),
     });
-    const refreshId = requestAnimationFrame(() => ScrollTrigger.refresh());
+    const onPointerMove = (event: PointerEvent) => {
+      if (reducedMotion || event.pointerType === "touch") return;
+      const bounds = stage.getBoundingClientRect();
+      const x = (event.clientX - bounds.left) / bounds.width - 0.5;
+      const y = (event.clientY - bounds.top) / bounds.height - 0.5;
+      targetTiltX = -y * 7;
+      targetTiltY = x * 7;
+      scheduleRender();
+    };
+    const resetPointer = () => {
+      targetTiltX = 0;
+      targetTiltY = 0;
+      scheduleRender();
+    };
+    stage.addEventListener("pointermove", onPointerMove);
+    stage.addEventListener("pointerleave", resetPointer);
+    updateProgress(trigger.progress);
+    const refreshFrame = window.requestAnimationFrame(() => ScrollTrigger.refresh());
     return () => {
-      cancelAnimationFrame(refreshId);
+      window.cancelAnimationFrame(refreshFrame);
       trigger.kill();
-      gsap.set(cards, { clearProps: "transform" });
+      stage.removeEventListener("pointermove", onPointerMove);
+      stage.removeEventListener("pointerleave", resetPointer);
+      if (frame) window.cancelAnimationFrame(frame);
     };
   }, []);
 
   return (
     <section className="orbit-gallery-section" id="gallery" ref={sectionRef} aria-label="Hawks sports photo gallery">
-      <div className="orbit-gallery-brand"><img src="/images/hawks-logo-transparent.png" alt="Hawks" /><span>HAWKS<br />YOUTH CLUB</span></div>
-      <div className="orbit-gallery-nav" aria-hidden="true"><span>OUR STORY</span><span>PROGRAMS</span><span>JOIN THE CLUB ↗</span></div>
       <div className="orbit-gallery-stage" ref={stageRef}>
-        {galleryPhotos.map((photo, index) => (
-          <div className="orbit-card" key={`${photo.src}-${index}`} ref={(node) => { cardsRef.current[index] = node; }} tabIndex={0} role="img" aria-label={photo.alt}>
-            <div className="orbit-card-media"><img src={photo.src} alt="" loading="lazy" /></div>
+        <div className="orbit-gallery-view">
+          <div className="orbit-gallery-ring" ref={ringRef} role="list" aria-label="Hawks sports photo carousel">
+            {galleryPhotos.map((photo, index) => (
+              <div className="orbit-card" key={`${photo.src}-${index}`} ref={(node) => { cardsRef.current[index] = node; }} style={{ "--card-angle": `${(index * 360) / galleryPhotos.length}deg` } as CSSProperties} role="listitem" aria-label={photo.alt}>
+                <img src={photo.src} alt="" loading="lazy" />
+              </div>
+            ))}
           </div>
-        ))}
-        <div className="orbit-gallery-center" aria-hidden="true"><img src="/images/hawks-logo-transparent.png" alt="" /></div>
+          <article className="orbit-gallery-featured" aria-live="polite" aria-atomic="true">
+            <div className="orbit-gallery-featured-image"><img key={galleryPhotos[activeIndex].src} src={galleryPhotos[activeIndex].src} alt={galleryPhotos[activeIndex].alt} /></div>
+            <p>{galleryPhotos[activeIndex].alt}</p>
+          </article>
+        </div>
+        <p className="orbit-gallery-footer"><span aria-hidden="true">↓</span> Scroll to explore</p>
       </div>
-      <div className="orbit-gallery-footer"><span>HAWKS YOUTH CLUB · MOVE AS ONE</span><span>SCROLL TO EXPLORE ↘</span></div>
     </section>
   );
 }
@@ -314,13 +348,171 @@ function IntroMotionBand() {
   );
 }
 
+function CappenCursor() {
+  const cursorRef = useRef<HTMLDivElement>(null);
+  const dotRef = useRef<HTMLSpanElement>(null);
+
+  useEffect(() => {
+    const cursor = cursorRef.current;
+    const dot = dotRef.current;
+    const finePointer = window.matchMedia("(hover: hover) and (pointer: fine)");
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (!cursor || !dot || !finePointer.matches || reducedMotion) return;
+
+    document.body.classList.add("cappen-cursor-active");
+    let x = 0;
+    let y = 0;
+    let targetX = 0;
+    let targetY = 0;
+    let hasPosition = false;
+    let frame = 0;
+    let lastFrameTime = 0;
+    let hideTimer: ReturnType<typeof setTimeout> | undefined;
+
+    const animate = (time: number) => {
+      frame = 0;
+      const elapsed = lastFrameTime ? Math.min(64, time - lastFrameTime) : 16.67;
+      lastFrameTime = time;
+      const easing = 1 - Math.pow(0.9, elapsed / 16.67);
+      const dx = targetX - x;
+      const dy = targetY - y;
+      x += dx * easing;
+      y += dy * easing;
+      cursor.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+
+      const distance = Math.hypot(dx, dy);
+      let stretch = Math.min(distance / 100, 0.5);
+      stretch *= (stretch / 0.5) ** 2;
+      const angle = Math.atan2(dy, dx);
+      dot.style.transform = `translate(-50%, -50%) scale(${1 + stretch}, ${1 - 0.25 * stretch}) rotate(${angle}rad)`;
+
+      if (distance > 0.12) frame = window.requestAnimationFrame(animate);
+    };
+
+    const move = (event: globalThis.MouseEvent) => {
+      targetX = event.clientX;
+      targetY = event.clientY;
+      if (!hasPosition) {
+        x = targetX;
+        y = targetY;
+        hasPosition = true;
+      }
+      cursor.classList.add("is-visible");
+      if (hideTimer) clearTimeout(hideTimer);
+      hideTimer = setTimeout(() => cursor.classList.remove("is-visible"), 1500);
+      if (!frame) frame = window.requestAnimationFrame(animate);
+    };
+    const leave = () => cursor.classList.remove("is-visible");
+
+    window.addEventListener("mousemove", move, { passive: true });
+    document.addEventListener("mouseleave", leave);
+    return () => {
+      window.removeEventListener("mousemove", move);
+      document.removeEventListener("mouseleave", leave);
+      if (frame) window.cancelAnimationFrame(frame);
+      if (hideTimer) clearTimeout(hideTimer);
+      document.body.classList.remove("cappen-cursor-active");
+    };
+  }, []);
+
+  return <div className="cappen-cursor" ref={cursorRef} aria-hidden="true"><span className="cappen-cursor-dot" ref={dotRef} /></div>;
+}
+
+function GooeyQuoteReveal() {
+  const quoteRef = useRef<HTMLQuoteElement>(null);
+  const lastPointRef = useRef<{ x: number; y: number } | null>(null);
+  const [maskSize, setMaskSize] = useState({ width: 1000, height: 400 });
+  const [scratchPoints, setScratchPoints] = useState<Array<{ x: number; y: number }>>([]);
+
+  useEffect(() => {
+    const quote = quoteRef.current;
+    if (!quote) return;
+    const observer = new ResizeObserver(([entry]) => {
+      setMaskSize({ width: Math.max(1, entry.contentRect.width), height: Math.max(1, entry.contentRect.height) });
+    });
+    observer.observe(quote);
+    return () => observer.disconnect();
+  }, []);
+
+  const addScratch = (points: Array<{ x: number; y: number }>) => {
+    setScratchPoints((previous) => [...previous, ...points]);
+  };
+
+  const scratchQuote = (event: React.PointerEvent<HTMLQuoteElement>) => {
+    const quote = quoteRef.current;
+    if (!quote) return;
+    const bounds = quote.getBoundingClientRect();
+    const current = { x: event.clientX - bounds.left, y: event.clientY - bounds.top };
+    const previous = lastPointRef.current;
+    lastPointRef.current = current;
+    if (!previous) {
+      addScratch([current]);
+      return;
+    }
+
+    const distance = Math.hypot(current.x - previous.x, current.y - previous.y);
+    if (distance < 10) return;
+    const steps = Math.ceil(distance / 12);
+    const newPoints = Array.from({ length: steps }, (_, index) => {
+      const progress = (index + 1) / steps;
+      return {
+        x: previous.x + (current.x - previous.x) * progress,
+        y: previous.y + (current.y - previous.y) * progress,
+      };
+    });
+    addScratch(newPoints);
+  };
+
+  const resetScratchPoint = () => {
+    lastPointRef.current = null;
+  };
+
+  return (
+    <blockquote className="quote-reveal" ref={quoteRef} onPointerMove={scratchQuote} onPointerLeave={resetScratchPoint} onPointerDown={scratchQuote}>
+      “The best part is having people around you who cheer you on, even when you’re still learning.”
+      <span className="quote-reveal-cover" aria-hidden="true" />
+      <svg className="quote-mask-defs" aria-hidden="true" focusable="false">
+        <defs>
+          <filter id="quote-gooey-filter" x="-20%" y="-20%" width="140%" height="140%" colorInterpolationFilters="sRGB">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="8" result="blur" />
+            <feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 18 -7" result="goo" />
+          </filter>
+          <mask id="quote-gooey-mask" maskUnits="objectBoundingBox" maskContentUnits="userSpaceOnUse" mask-type="luminance">
+            <rect x="-10000" y="-10000" width="20000" height="20000" fill="white" />
+            <g filter="url(#quote-gooey-filter)" fill="black">
+              {scratchPoints.map((point, index) => <circle key={index} cx={point.x} cy={point.y} r="34" />)}
+            </g>
+          </mask>
+        </defs>
+      </svg>
+    </blockquote>
+  );
+}
+
 export function ClubPage({ page = "home" }: { page?: PageKind }) {
   const lenis = useRef<Lenis | null>(null);
   const revealRoot = useRef<HTMLElement>(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [menuMounted, setMenuMounted] = useState(false);
+  const menuCloseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const navigate = usePageTransition();
   const navigateClick = transitionClick(navigate);
   const isHome = page === "home";
+
+  const toggleMenu = () => {
+    if (menuCloseTimer.current) clearTimeout(menuCloseTimer.current);
+    if (menuOpen) {
+      setMenuOpen(false);
+      menuCloseTimer.current = setTimeout(() => setMenuMounted(false), 420);
+      return;
+    }
+    setMenuMounted(true);
+    requestAnimationFrame(() => setMenuOpen(true));
+  };
+
+  useEffect(() => () => {
+    if (menuCloseTimer.current) clearTimeout(menuCloseTimer.current);
+  }, []);
 
   useEffect(() => {
     if (page === "image-slider") return;
@@ -389,8 +581,12 @@ export function ClubPage({ page = "home" }: { page?: PageKind }) {
         <a className="site-logo" href="/" onClick={navigateClick} aria-label="Hawks Sports Club home"><img src="/images/hawks-logo-transparent.png" alt="Hawks Sports Club" /></a>
         <nav className="desktop-nav" aria-label="Primary navigation">{navigation.map((item) => <a href={item.href} onClick={navigateClick} key={item.label} aria-current={page === (item.href === "/" ? "home" : item.href.slice(1)) ? "page" : undefined}>{item.label}</a>)}</nav>
         <a className="header-cta" href="/pricing" onClick={navigateClick}>Join the club</a>
-        <button className="mobile-menu-button" onClick={() => setMenuOpen(!menuOpen)} aria-label="Toggle menu">{menuOpen ? <X size={22} /> : <Menu size={23} />}</button>
-        {menuOpen && <nav className="mobile-nav" aria-label="Mobile navigation">{navigation.map((item) => <a href={item.href} onClick={(event) => { navigateClick(event); setMenuOpen(false); }} key={item.label} aria-current={page === (item.href === "/" ? "home" : item.href.slice(1)) ? "page" : undefined}>{item.label}</a>)}</nav>}
+        <button className={`mobile-menu-button${menuOpen ? " is-open" : ""}`} onClick={toggleMenu} aria-label={menuOpen ? "Close navigation menu" : "Open navigation menu"} aria-expanded={menuOpen} aria-controls="mobile-navigation">
+          <span className="menu-icon-lines" aria-hidden="true"><span /><span /></span>
+        </button>
+        {menuMounted && <nav id="mobile-navigation" className={`mobile-nav${menuOpen ? " is-open" : ""}`} aria-label="Mobile navigation" aria-hidden={!menuOpen}>
+          {navigation.map((item, index) => <a href={item.href} onClick={(event) => { navigateClick(event); setMenuOpen(false); if (menuCloseTimer.current) clearTimeout(menuCloseTimer.current); menuCloseTimer.current = setTimeout(() => setMenuMounted(false), 420); }} key={item.label} aria-current={page === (item.href === "/" ? "home" : item.href.slice(1)) ? "page" : undefined} style={{ "--menu-index": index } as CSSProperties}>{item.label}</a>)}
+        </nav>}
       </header>
       {page === "image-slider" && <InfiniteImageGallery />}
       {isHome && <section className="hero" id="home">
@@ -435,9 +631,9 @@ export function ClubPage({ page = "home" }: { page?: PageKind }) {
         <div className="program-grid">{programs.map((program) => <article className="program-card" key={program.number}><div className="program-image"><img src={program.image} alt={program.alt} loading="lazy" /></div><div className="program-meta"><span>PROGRAM</span><span>{program.number}</span></div><h3>{program.title}</h3><p>{program.text}</p><a href="/pricing" onClick={navigateClick}>Explore the program <ArrowUpRight size={16} /></a></article>)}</div>
       </section>}
 
-      {(isHome || page === "story" || page === "events") && <OrbitalGallery />}
+      {(isHome || page === "events") && <OrbitalGallery />}
 
-      {(isHome || page === "story") && <section className="people-section">
+      {isHome && <section className="people-section">
         <div className="people-photo"><img src="https://theperformancelab.ca/parallax/i4.webp" alt="A coach encouraging an athlete" loading="lazy" /></div>
         <div className="people-copy"><p className="eyebrow">02 — People make the club</p><h2>Good sport<br />starts with<br /><em>good people.</em></h2><p>Our coaches and volunteers help make every session a place to learn, try, and feel supported. We value effort, respect, teamwork, and the courage to have a go.</p><a className="light-link" href="/pricing" onClick={navigateClick}>Meet the Hawks community <ArrowUpRight size={17} /></a></div>
         <div className="people-stamp"><strong>PLAY<br />AS ONE</strong><span>HAWKS SPORTS CLUB</span></div>
@@ -449,13 +645,13 @@ export function ClubPage({ page = "home" }: { page?: PageKind }) {
         <a className="orange-link" href="#join" onClick={scrollTo}>Take your first step <ArrowUpRight size={18} /></a>
       </section>}
 
-      {(isHome || page === "story" || page === "events") && <section className="quote-section"><p className="eyebrow">A note from the club</p><blockquote>“The best part is having people around you who cheer you on, even when you’re still learning.”</blockquote><div className="quote-byline"><span className="quote-mark">H</span><span>Hawks Club<br /><small>Young athlete</small></span></div></section>}
+      {(isHome || page === "events") && <section className="quote-section"><p className="eyebrow">A note from the club</p><GooeyQuoteReveal /><div className="quote-byline"><span className="quote-mark">H</span><span>Hawks Club<br /><small>Young athlete</small></span></div></section>}
 
-      {(isHome || page === "blog") && <section className="journal-section" id="journal"><div className="journal-heading"><div><p className="eyebrow">04 — Notes from the club</p><h2>Keep<br /><em>moving.</em></h2></div><a className="text-link" href="/pricing" onClick={navigateClick}>More from Hawks <ArrowUpRight size={17} /></a></div><div className="journal-grid">{journal.map((post) => <article className="journal-card" key={post.number}><div className="journal-art"><span className="journal-art-number">{post.number}</span><span className="journal-orbit" /></div><div className="journal-meta"><span>{post.tag}</span><span>{post.number}</span></div><h3>{post.title}</h3><a href="/story" onClick={navigateClick}>Read the story <ArrowUpRight size={16} /></a></article>)}</div></section>}
+      {page === "blog" && <section className="journal-section" id="journal"><div className="journal-heading"><div><p className="eyebrow">04 — Notes from the club</p><h2>Keep<br /><em>moving.</em></h2></div><a className="text-link" href="/pricing" onClick={navigateClick}>More from Hawks <ArrowUpRight size={17} /></a></div><div className="journal-grid">{journal.map((post) => <article className="journal-card" key={post.number}><div className="journal-art"><span className="journal-art-number">{post.number}</span><span className="journal-orbit" /></div><div className="journal-meta"><span>{post.tag}</span><span>{post.number}</span></div><h3>{post.title}</h3><a href="/story" onClick={navigateClick}>Read the story <ArrowUpRight size={16} /></a></article>)}</div></section>}
 
       {(isHome || page === "pricing") && <section className="join-section" id="join"><div><p className="eyebrow">Your next move starts here</p><h2>Come find<br /><em>your team.</em></h2></div><div className="join-copy"><p>New to sport or ready for a new challenge? There’s a place for you at Hawks.</p><a className="dark-cta" href="mailto:hello@hawksclub.in">Get in touch <ArrowUpRight size={19} /></a><span>Families and young athletes are welcome to reach out.</span></div></section>}
 
-      {page !== "image-slider" && <footer className="hawks-footer" id="footer">
+      {page !== "image-slider" && page !== "story" && <footer className="hawks-footer" id="footer">
         <div className="hawks-footer-cta"><h2>Hawks Together.<br />Rise Together.</h2><div className="hawks-footer-actions"><a className="hawks-footer-secondary" href="/events" onClick={navigateClick}>Explore programs</a><a className="hawks-footer-primary" href="/pricing" onClick={navigateClick}>Join the club</a></div></div>
         <FooterHands />
         <div className="hawks-footer-content">
@@ -467,6 +663,7 @@ export function ClubPage({ page = "home" }: { page?: PageKind }) {
           <p className="hawks-footer-copyright">© 2026 Hawks Youth Club. All rights reserved.</p>
         </div>
       </footer>}
+      <CappenCursor />
     </main>
   );
 }
