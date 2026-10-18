@@ -159,6 +159,7 @@ function OrbitalGallery() {
     gsap.registerPlugin(ScrollTrigger);
     const cards = cardsRef.current.filter((card): card is HTMLDivElement => card !== null);
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const mobileViewport = window.matchMedia("(max-width: 760px)").matches;
     let targetRotation = 0;
     let rotation = 0;
     let targetTiltX = 0;
@@ -191,7 +192,7 @@ function OrbitalGallery() {
     };
 
     const updateProgress = (progress: number) => {
-      const turn = reducedMotion ? 180 : 360;
+      const turn = reducedMotion ? 180 : mobileViewport ? 720 : 360;
       targetRotation = -progress * turn;
       const cardStep = 360 / cards.length;
       const nextIndex = Math.round((progress * turn) / cardStep) % cards.length;
@@ -280,6 +281,10 @@ function InfiniteImageGallery() {
     const visibleDepth = layerGap * 3;
     const initialScroll = tunnelDepth - 100;
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const mobileViewport = window.matchMedia("(max-width: 760px)").matches;
+    const scrollEase = reducedMotion ? 1 : mobileViewport ? 0.15 : 0.075;
+    const wheelSensitivity = mobileViewport ? 2.5 : 0.75;
+    const touchSensitivity = mobileViewport ? 2.8 : 0.84;
     const scroll = { target: initialScroll, current: initialScroll };
 
     const getOverlay = (z: number) => {
@@ -289,7 +294,7 @@ function InfiniteImageGallery() {
       return 1;
     };
     const renderTunnel = () => {
-      scroll.current += (scroll.target - scroll.current) * (reducedMotion ? 1 : 0.075);
+      scroll.current += (scroll.target - scroll.current) * scrollEase;
       layers.forEach((layer, index) => {
         const baseZ = -index * layerGap;
         let z = ((baseZ + scroll.current) % tunnelDepth + tunnelDepth) % tunnelDepth;
@@ -301,13 +306,13 @@ function InfiniteImageGallery() {
     };
     const handleWheel = (event: WheelEvent) => {
       if (!stage.isConnected) return;
-      scroll.target += event.deltaY * 0.75;
+      scroll.target += event.deltaY * wheelSensitivity;
     };
     const handleTouchStart = (event: TouchEvent) => { stage.dataset.touchY = String(event.touches[0]?.clientY ?? 0); };
     const handleTouchMove = (event: TouchEvent) => {
       const previousY = Number(stage.dataset.touchY ?? 0);
       const nextY = event.touches[0]?.clientY ?? previousY;
-      scroll.target += (previousY - nextY) * 0.84;
+      scroll.target += (previousY - nextY) * touchSensitivity;
       stage.dataset.touchY = String(nextY);
     };
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -677,10 +682,10 @@ export function ClubPage({ page = "home" }: { page?: PageKind }) {
     if (!root) return;
 
     const loader = root.querySelector<HTMLElement>(".site-loader");
+    const hero = root.querySelector<HTMLElement>(".hero");
     const counter = root.querySelector<HTMLElement>(".loader-counter");
     const progress = root.querySelector<HTMLElement>(".loader-progress-fill");
-    const heroImage = root.querySelector<HTMLImageElement>(".hero-backdrop-image");
-    if (!loader || !counter || !progress || !heroImage) return;
+    if (!loader || !hero || !counter || !progress) return;
     const heroTitleLines = root.querySelectorAll<HTMLElement>(".hero-title span");
     const heroCopy = root.querySelectorAll<HTMLElement>(".hero-intro p");
     const heroCta = root.querySelector<HTMLElement>(".hero-cta");
@@ -688,8 +693,16 @@ export function ClubPage({ page = "home" }: { page?: PageKind }) {
 
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (reducedMotion) {
+      root.classList.remove("home-loading");
       gsap.set(loader, { autoAlpha: 0, pointerEvents: "none" });
-      gsap.set(heroImage, { width: "100%", height: "100%" });
+      const heroEntranceElements = [
+        ...Array.from(heroHeaderItems),
+        ...Array.from(heroTitleLines),
+        ...Array.from(heroCopy),
+        ...(heroCta ? [heroCta] : []),
+      ];
+      gsap.set(heroEntranceElements, { clearProps: "all" });
+      gsap.set(hero, { clearProps: "transform,zIndex" });
       return;
     }
 
@@ -698,18 +711,19 @@ export function ClubPage({ page = "home" }: { page?: PageKind }) {
       const timeline = gsap.timeline({ defaults: { ease: "power4.out" } });
       timeline.to(count, {
         value: 100,
-        duration: 2.7,
+        duration: 2.15,
         ease: "power2.inOut",
         onUpdate: () => { counter.textContent = String(Math.round(count.value)).padStart(3, "0"); },
       }, 0);
-      timeline.to(progress, { scaleX: 1, duration: 2.7, ease: "power2.inOut" }, 0);
-      timeline.to(heroImage, { width: "100%", height: "100%", duration: 2.7, ease: "power3.inOut" }, 0);
-      timeline.to(loader, { autoAlpha: 0, duration: 0.36, ease: "power2.out", onComplete: () => { gsap.set(loader, { pointerEvents: "none" }); } }, 2.54);
-      timeline.fromTo(heroImage, { filter: "blur(10px)" }, { filter: "blur(0px)", duration: 0.8, ease: "power2.out" }, 2.18);
-      timeline.fromTo(heroHeaderItems, { autoAlpha: 0, y: 18, filter: "blur(8px)" }, { autoAlpha: 1, y: 0, filter: "blur(0px)", duration: 0.72, stagger: 0.055, ease: "power3.out" }, 2.48);
-      timeline.fromTo(heroTitleLines, { autoAlpha: 0, y: 52, filter: "blur(14px)" }, { autoAlpha: 1, y: 0, filter: "blur(0px)", duration: 1.05, stagger: 0.12, ease: "power4.out" }, 2.54);
-      timeline.fromTo(heroCopy, { autoAlpha: 0, y: 28, filter: "blur(10px)" }, { autoAlpha: 1, y: 0, filter: "blur(0px)", duration: 0.82, stagger: 0.11, ease: "power3.out" }, 2.78);
-      if (heroCta) timeline.fromTo(heroCta, { autoAlpha: 0, y: 26, filter: "blur(10px)" }, { autoAlpha: 1, y: 0, filter: "blur(0px)", duration: 0.82, ease: "power3.out" }, 2.96);
+      timeline.to(progress, { scaleX: 1, duration: 2.15, ease: "power2.inOut" }, 0);
+      timeline.fromTo(hero, { y: 0, yPercent: 100 }, { y: 0, yPercent: 0, duration: 1.05, ease: "power4.inOut", onComplete: () => {
+        root.classList.remove("home-loading");
+        gsap.set(loader, { autoAlpha: 0, pointerEvents: "none" });
+      } }, 2.15);
+      timeline.fromTo(heroHeaderItems, { autoAlpha: 0, y: 18, filter: "blur(8px)" }, { autoAlpha: 1, y: 0, filter: "blur(0px)", duration: 0.72, stagger: 0.055, ease: "power3.out" }, 3.24);
+      timeline.fromTo(heroTitleLines, { autoAlpha: 0, y: 52, filter: "blur(14px)" }, { autoAlpha: 1, y: 0, filter: "blur(0px)", duration: 1.05, stagger: 0.12, ease: "power4.out" }, 3.24);
+      timeline.fromTo(heroCopy, { autoAlpha: 0, y: 28, filter: "blur(10px)" }, { autoAlpha: 1, y: 0, filter: "blur(0px)", duration: 0.82, stagger: 0.11, ease: "power3.out" }, 3.48);
+      if (heroCta) timeline.fromTo(heroCta, { autoAlpha: 0, y: 26, filter: "blur(10px)" }, { autoAlpha: 1, y: 0, filter: "blur(0px)", duration: 0.82, ease: "power3.out" }, 3.62);
     }, root);
 
     return () => ctx.revert();
@@ -774,7 +788,7 @@ export function ClubPage({ page = "home" }: { page?: PageKind }) {
   };
 
   return (
-    <main ref={revealRoot}>
+    <main ref={revealRoot} className={isHome ? "home-loading" : undefined}>
       {isHome && <div className="site-loader" aria-hidden="true">
         <div className="loader-topline"><span>HAWKS YOUTH CLUB</span><span>RISE TOGETHER</span></div>
         <div className="loader-main"><span className="loader-label">MADE TO GROW</span><span className="loader-counter">000</span><span className="loader-percent">%</span></div>
@@ -796,7 +810,6 @@ export function ClubPage({ page = "home" }: { page?: PageKind }) {
       {page === "team" && <TeamPageContent />}
       {page === "events" && <EventsPageIntro onExplore={scrollTo} />}
       {isHome && <section className="hero" id="home" data-nav-theme="dark">
-        <img className="hero-backdrop-image" src="/images/runner-hero.jpg" alt="" aria-hidden="true" />
         <div className="hero-title" aria-label="A place to grow together"><span>A Place</span><span>To Grow</span><span>Together</span></div>
         <div className="hero-intro"><p>Founded in Bhagalpur, Hawks Youth Club helps children become confident, capable, and caring individuals.</p><p>Discover new interests, build life skills, and grow with a community that believes in you.</p></div>
           <a className="hero-cta" href="#programs" onClick={scrollTo}><span>Unlock your potential</span><ArrowUpRight size={22} strokeWidth={1.75} /></a>
