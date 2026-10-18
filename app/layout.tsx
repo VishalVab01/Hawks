@@ -6,7 +6,7 @@ import { PageTransitionProvider } from "./components/page-transition";
 
 config.autoAddCss = false;
 
-export const metadata: Metadata = { title: "Hawks Youth Club — Rise Together", description: "Sport, purpose and possibility for Bihar's youth." };
+export const metadata: Metadata = { title: "Hawks Youth Club — Rise Together", description: "A Bhagalpur youth club helping children grow through sports, creative expression, life skills, mentorship, and community." };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return <html lang="en"><body><PageTransitionProvider>{children}</PageTransitionProvider></body></html>;
