@@ -115,7 +115,7 @@ body,button,input,textarea,.desktop-nav,.header-cta,.mobile-nav a,.hero-title,.h
 .loader-progress{position:relative;flex:1;max-width:560px;height:2px;background:#383838}
 .loader-progress-fill{position:absolute;inset:0;background:var(--orange);transform:scaleX(0);transform-origin:left center}
 .hero{background:#17130f url('/images/cricket-club-hero.png') center center/cover no-repeat}
-@media(max-width:760px){.hero{background-position:70% center}}
+@media(max-width:760px){.hero{background-position:100% center}}
 .hero::after{z-index:0}
 .hero-intro,.hero-cta{z-index:1}
 .home-loading .hero{z-index:21;transform:translateY(100%)}
