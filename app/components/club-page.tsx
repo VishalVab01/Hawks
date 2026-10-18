@@ -162,10 +162,6 @@ function OrbitalGallery() {
     const mobileViewport = window.matchMedia("(max-width: 760px)").matches;
     let targetRotation = 0;
     let rotation = 0;
-    let targetTiltX = 0;
-    let targetTiltY = 0;
-    let tiltX = 0;
-    let tiltY = 0;
     let frame = 0;
     let lastFrameTime = 0;
 
@@ -175,14 +171,9 @@ function OrbitalGallery() {
       lastFrameTime = time;
       const frameScale = elapsed / 16.67;
       const scrollEase = reducedMotion ? 1 : 1 - Math.pow(1 - 0.2, frameScale);
-      const pointerEase = reducedMotion ? 1 : 1 - Math.pow(1 - 0.16, frameScale);
       rotation += (targetRotation - rotation) * scrollEase;
-      tiltX += (targetTiltX - tiltX) * pointerEase;
-      tiltY += (targetTiltY - tiltY) * pointerEase;
       stage.style.setProperty("--ring-rotation", `${rotation}deg`);
-      stage.style.setProperty("--ring-tilt-x", `${tiltX}deg`);
-      stage.style.setProperty("--ring-tilt-y", `${tiltY}deg`);
-      if (Math.abs(targetRotation - rotation) > 0.05 || Math.abs(targetTiltX - tiltX) > 0.02 || Math.abs(targetTiltY - tiltY) > 0.02) {
+      if (Math.abs(targetRotation - rotation) > 0.05) {
         frame = window.requestAnimationFrame(render);
       }
     };
@@ -208,29 +199,11 @@ function OrbitalGallery() {
       onUpdate: (self) => updateProgress(self.progress),
       onRefresh: (self) => updateProgress(self.progress),
     });
-    const onPointerMove = (event: PointerEvent) => {
-      if (reducedMotion || event.pointerType === "touch") return;
-      const bounds = stage.getBoundingClientRect();
-      const x = (event.clientX - bounds.left) / bounds.width - 0.5;
-      const y = (event.clientY - bounds.top) / bounds.height - 0.5;
-      targetTiltX = -y * 7;
-      targetTiltY = x * 7;
-      scheduleRender();
-    };
-    const resetPointer = () => {
-      targetTiltX = 0;
-      targetTiltY = 0;
-      scheduleRender();
-    };
-    stage.addEventListener("pointermove", onPointerMove);
-    stage.addEventListener("pointerleave", resetPointer);
     updateProgress(trigger.progress);
     const refreshFrame = window.requestAnimationFrame(() => ScrollTrigger.refresh());
     return () => {
       window.cancelAnimationFrame(refreshFrame);
       trigger.kill();
-      stage.removeEventListener("pointermove", onPointerMove);
-      stage.removeEventListener("pointerleave", resetPointer);
       if (frame) window.cancelAnimationFrame(frame);
     };
   }, []);
