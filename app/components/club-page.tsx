@@ -170,7 +170,7 @@ function OrbitalGallery() {
       const elapsed = lastFrameTime ? Math.min(64, time - lastFrameTime) : 16.67;
       lastFrameTime = time;
       const frameScale = elapsed / 16.67;
-      const scrollEase = reducedMotion ? 1 : 1 - Math.pow(1 - 0.2, frameScale);
+      const scrollEase = reducedMotion ? 1 : 1 - Math.pow(1 - 0.14, frameScale);
       rotation += (targetRotation - rotation) * scrollEase;
       stage.style.setProperty("--ring-rotation", `${rotation}deg`);
       if (Math.abs(targetRotation - rotation) > 0.05) {
