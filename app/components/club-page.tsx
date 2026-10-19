@@ -422,35 +422,38 @@ function JoinClubApplication() {
       </div>
       <form className="join-application-form" action="mailto:hello@hawksclub.in?subject=Hawks%20Youth%20Club%20Membership%20Enquiry" method="post" encType="text/plain">
         <div className="join-form-field">
-          <label htmlFor="young-person-name">Young person’s name</label>
+          <label htmlFor="young-person-name">Applicant name</label>
           <input id="young-person-name" name="Young person's name" autoComplete="name" required />
         </div>
         <div className="join-form-field join-form-field-short">
-          <label htmlFor="young-person-age">Age</label>
+          <label htmlFor="young-person-age">Applicant age</label>
           <input id="young-person-age" name="Age" type="number" min="5" max="18" inputMode="numeric" required />
         </div>
         <div className="join-form-field">
-          <label htmlFor="guardian-name">Parent or guardian’s name</label>
-          <input id="guardian-name" name="Parent or guardian's name" autoComplete="name" required />
+          <label htmlFor="applicant-email">Email address</label>
+          <input id="applicant-email" name="Email address" type="email" autoComplete="email" required />
         </div>
         <div className="join-form-field">
-          <label htmlFor="guardian-email">Parent or guardian’s email</label>
-          <input id="guardian-email" name="Parent or guardian's email" type="email" autoComplete="email" required />
+          <label htmlFor="applicant-gender">Gender</label>
+          <select id="applicant-gender" name="Gender" defaultValue="" required>
+            <option value="" disabled>Select an option</option>
+            <option>Female</option><option>Male</option><option>Prefer not to say</option>
+          </select>
         </div>
         <div className="join-form-field">
-          <label htmlFor="guardian-phone">Phone number</label>
+          <label htmlFor="guardian-phone">Contact number</label>
           <input id="guardian-phone" name="Phone number" type="tel" autoComplete="tel" />
         </div>
         <div className="join-form-field">
-          <label htmlFor="club-interest">What would you like to try?</label>
+          <label htmlFor="club-interest">Area of interest</label>
           <select id="club-interest" name="Activity of interest" defaultValue="" required>
-            <option value="" disabled>Select an activity</option>
+            <option value="" disabled>Select an area</option>
             <option>Football</option><option>Cricket</option><option>Basketball</option><option>Badminton</option>
             <option>Creative Arts & Expression</option><option>Entrepreneurship</option><option>Chess</option><option>Gaming</option><option>Not sure yet</option>
           </select>
         </div>
         <div className="join-form-field join-form-field-wide">
-          <label htmlFor="join-message">Anything else we should know? <span>Optional</span></label>
+          <label htmlFor="join-message">Additional information <span>Optional</span></label>
           <textarea id="join-message" name="Additional details" rows={3} />
         </div>
         <p className="join-form-note">Submitting opens your email app with these details ready to send to the Hawks team.</p>
