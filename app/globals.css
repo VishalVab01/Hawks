@@ -491,7 +491,7 @@ body,button,input,textarea,.desktop-nav,.header-cta,.mobile-nav a,.hero-title,.h
   .hawks-footer .footer-hand-right{right:0}
   .hawks-footer .footer-hand canvas{opacity:1}
   .footer-mobile-hide{display:none!important}
-  .hawks-footer-link-group:last-child{display:none}
+  .hawks-footer-link-group:last-child{display:block}
   .hawks-footer-quicklinks{grid-template-columns:repeat(2,minmax(0,1fr))}
   .hawks-footer-quicklinks li:nth-child(n+3){border-top:0}
   .hawks-footer-quicklinks li:nth-child(4){border-left:1px solid rgb(255 255 255 / 14%)}
